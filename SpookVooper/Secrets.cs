@@ -36,6 +36,10 @@ namespace SpookVooper.Web
 
         public static string EmailAPIKey { get { return config.EmailAPIKey; } }
 
+        public static string DiscordOauthClient { get { return config.DiscordOauthClient; } }
+
+        public static string DiscordOauthSecret { get { return config.DiscordOauthSecret; } }
+
     }
 
     public class Config
@@ -60,6 +64,10 @@ namespace SpookVooper.Web
         public string NerdcraftDBString;
         [JsonProperty]
         public string EmailAPIKey;
+        [JsonProperty]
+        public string DiscordOauthClient;
+        [JsonProperty]
+        public string DiscordOauthSecret;
     }
 
     #endregion

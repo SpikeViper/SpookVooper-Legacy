@@ -12,6 +12,13 @@ using SpookVooper.Web.Models.AccountViewModels;
 using SpookVooper.Web.Services;
 using SpookVooper.Data.Services;
 using SpookVooper.Web.Entities;
+using System.Web;
+using System.Collections.Generic;
+using System.Net;
+using System.Net.Http;
+using System.Net.Http.Json;
+using System.Text;
+using Newtonsoft.Json;
 
 namespace SpookVooper.Web.Controllers
 {
@@ -38,7 +45,6 @@ namespace SpookVooper.Web.Controllers
             _userManager = userManager;
             _signInManager = signInManager;
             _logger = logger;
-            _connectionHandler = connectionHandler;
         }
 
         [TempData]
@@ -55,6 +61,8 @@ namespace SpookVooper.Web.Controllers
             return View();
         }
 
+        public static List<string> states = new List<string>();
+
         [Authorize]
         public async Task<IActionResult> ConnectDiscord()
         {
@@ -64,11 +72,107 @@ namespace SpookVooper.Web.Controllers
                 throw new ApplicationException($"Unable to load user with ID '{_userManager.GetUserId(User)}'.");
             }
 
-            int key = _connectionHandler.GenerateKey(user.Id);
+            string state = Guid.NewGuid().ToString().Substring(0, 8);
 
-            ViewData["key"] = key;
+            states.Add(state);
 
-            return View();
+            string redirect = HttpUtility.UrlEncode("https://spookvooper.com/Account/DiscordCallback");
+
+            string request = $"https://discordapp.com/api/oauth2/authorize?response_type=code" +
+                                                                        $"&client_id={Secrets.DiscordOauthClient}" +
+                                                                        $"&scope=identify" +
+                                                                        $"&state={state}" +
+                                                                        $"&redirect_uri={redirect}";
+
+            return Redirect(request);
+        }
+
+        [Authorize]
+        public async Task<IActionResult> DiscordCallback(string state, string code)
+        {
+            if (!states.Contains(state))
+            {
+                ErrorMessage = "Error in discord Oauth state.";
+                return RedirectToAction("Index", "Manage", new { area = "" });
+            }
+
+            states.Remove(state);
+
+            string redirect = HttpUtility.UrlEncode("https://spookvooper.com/Account/DiscordCallback");
+
+            HttpClient client = new HttpClient();
+
+            var param = new Dictionary<string, string>
+            {
+                { "client_id", Secrets.DiscordOauthClient },
+                { "client_secret_id", Secrets.DiscordOauthSecret },
+                { "grant_type", "authorization_code" },
+                { "code", code },
+                { "redirect_uri", redirect }
+            };
+
+            var response = await client.PostAsync("https://discordapp.com/api/oauth2/token", new FormUrlEncodedContent(param));
+
+            string tokenInfo = await response.Content.ReadAsStringAsync();
+
+            DiscordTokenResponse responseToken = JsonConvert.DeserializeObject<DiscordTokenResponse>(tokenInfo);
+
+            if (responseToken == null)
+            {
+                ErrorMessage = "Error in token retrieval.";
+                return RedirectToAction("Index", "Manage", new { area = "" });
+            }
+
+            client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", responseToken.access_token);
+
+            var userResponse = await client.GetAsync("https://discordapp.com/api/users/@me");
+
+            string userInfoString = await userResponse.Content.ReadAsStringAsync();
+
+            DiscordUserResponse userInfo = JsonConvert.DeserializeObject<DiscordUserResponse>(userInfoString);
+
+            if (userInfo == null)
+            {
+                ErrorMessage = "Error in user info retrieval.";
+                return RedirectToAction("Index", "Manage", new { area = "" });
+            }
+
+            User user = await _userManager.GetUserAsync(User);
+            user.discord_id = userInfo.id;
+
+            await _userManager.UpdateAsync(user);
+
+            ErrorMessage = "Successfully linked discord.";
+
+            return RedirectToAction("Index", "Manage", new { area = "" });
+        }
+
+        public class DiscordUserResponse
+        {
+            [JsonProperty]
+            public string username { get; set; }
+            [JsonProperty]
+            public int discriminator { get; set; }
+            [JsonProperty]
+            public bool mfa_enabled { get; set; }
+            [JsonProperty]
+            public ulong id { get; set; }
+            [JsonProperty]
+            public string avatar { get; set; }
+        }
+
+        public class DiscordTokenResponse
+        {
+            [JsonProperty]
+            public string access_token { get; set; }
+            [JsonProperty]
+            public string token_type { get; set; }
+            [JsonProperty]
+            public int expires_in { get; set; }
+            [JsonProperty]
+            public string refresh_token { get; set; }
+            [JsonProperty]
+            public string scope { get; set; }
         }
 
         [Authorize]
