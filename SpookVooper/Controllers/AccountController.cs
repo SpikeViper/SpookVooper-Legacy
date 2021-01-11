@@ -119,6 +119,7 @@ namespace SpookVooper.Web.Controllers
 
             if (responseToken == null)
             {
+                Console.WriteLine("Discord connect: Error in token");
                 ErrorMessage = "Error in token retrieval.";
                 return RedirectToAction("Index", "Manage", new { area = "" });
             }
@@ -133,6 +134,7 @@ namespace SpookVooper.Web.Controllers
 
             if (userInfo == null)
             {
+                Console.WriteLine("Discord connect: Error in user info");
                 ErrorMessage = "Error in user info retrieval.";
                 return RedirectToAction("Index", "Manage", new { area = "" });
             }
@@ -144,6 +146,7 @@ namespace SpookVooper.Web.Controllers
 
             ErrorMessage = "Successfully linked discord.";
 
+            Console.WriteLine("Discord connect: Connected successfully");
             return RedirectToAction("Index", "Manage", new { area = "" });
         }
 
