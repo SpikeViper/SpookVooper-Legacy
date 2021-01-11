@@ -267,7 +267,7 @@ namespace SpookVooper.VoopAIService
                 await CmdMessages(message, args);
             }
 
-            else if (rootCmd == "balance")
+            else if (rootCmd == "balance" || rootCmd == "bal")
             {
                 await CmdBalance(message);
             }
