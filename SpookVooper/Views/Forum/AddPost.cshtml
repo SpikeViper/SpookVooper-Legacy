@@ -1,0 +1,72 @@
+﻿@model PostViewModel
+@{
+    ViewData["Title"] = "Add Post";
+}
+
+<div class="container vw-100">
+    <div class="col-12">
+        <h4>@ViewData["Title"]</h4>
+        @await Html.PartialAsync("_StatusMessage", TempData["StatusMessage"])
+
+
+        <form method="post">
+            <div class="row">
+                <div class="col-md-6">
+                    <div asp-validation-summary="All" class="text-danger"></div>
+                    <div class="form-group">
+                        <label asp-for="Title"></label>
+                        <input asp-for="Title" class="form-control" />
+                        <span asp-validation-for="Title" class="text-danger"></span>
+                    </div>
+                    <div class="form-group">
+                        <label asp-for="Tags"></label>
+                        <input asp-for="Tags" class="form-control" />
+                        <span asp-validation-for="Tags" class="text-danger"></span>
+                    </div>
+                    <div class="form-group">
+                        @Html.HiddenFor(x => x.Category)
+                        <label asp-for="Category"></label>
+                        <input asp-for="Category" class="form-control" disabled />
+                        <span asp-validation-for="Category" class="text-danger"></span>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <!-- Handle picture posts differently for validation -->
+                @Html.HiddenFor(x => x.Picture)
+                <div class="col-md-10">
+                    @if (!Model.Picture)
+                    {
+                        <div class="form-group">
+                            <label asp-for="Content"></label>
+                            <textarea asp-for="Content" rows="6" class="form-control"> </textarea>
+                            <span asp-validation-for="Content" class="text-danger"></span>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="form-group">
+                            <label asp-for="ImageLink"></label>
+                            <textarea asp-for="ImageLink" rows="2" class="form-control"> </textarea>
+                            <span asp-validation-for="ImageLink" class="text-danger"></span>
+                        </div>
+                    }
+                </div>
+                <br />
+            </div>
+
+            <div class="form-group">
+                <div class="container" style="align-content:flex-start">
+                    <div class="d-flex">
+                        <div class="flex-column" style="margin-right:5px; margin-left: -15px">
+                            <button type="submit" class="btn btn-primary">Save</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+    @section Scripts {
+        @await Html.PartialAsync("_ValidationScriptsPartial")
+    }
+</div>

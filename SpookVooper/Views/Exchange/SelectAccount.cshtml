@@ -1,0 +1,58 @@
+﻿@model string
+@inject UserManager<User> userManager
+@inject VooperContext context
+
+@{
+    ViewData["Title"] = "SVSE Select Account";
+    User webUser = await userManager.GetUserAsync(User);
+    Entity currentUser = null;
+
+    if (!string.IsNullOrWhiteSpace(Model))
+    {
+        currentUser = await userManager.FindByIdAsync(Model);
+        if (currentUser == null) currentUser = await context.Groups.FindAsync(Model);
+    }
+
+    List<Entity> accounts = new List<Entity>();
+
+    if (webUser != null)
+    {
+        accounts.Add(webUser);
+    }
+
+    foreach (Group group in await webUser.GetJoinedGroupsAsync())
+    {
+        if (await group.HasPermission(webUser, "eco"))
+        {
+            accounts.Add(group);
+        }
+    }
+}
+
+
+<body style="background-color:#040d14">
+    <!-- Main row for page -->
+    <div class="d-flex flex-row align-content-center" style="width:100%;">
+        <!-- Leftmost column -->
+        <div class="p-4 flex-shrink-1 ml-auto"></div>
+        <!-- Center column -->
+        <div class="p-4" style="width:80em">
+            <h4>Choose an Account:</h4>
+
+            <!-- Account boxes -->
+            <div class="d-flex flex-column">
+                @foreach (Entity account in accounts)
+                {
+                    <a asp-controller="Exchange" asp-action="Index" asp-route-account="@account.Id">
+                        <div class="account-box">
+                            <img class="account-image" src="@account.Image_Url" />
+                            <h3 class="account-name">@account.Name</h3>
+                        </div>
+                    </a>
+                }
+            </div>
+        </div>
+        <!-- Rightmost column -->
+        <div class="p-4 flex-shrink-1 mr-auto"></div>
+    </div>
+</body>

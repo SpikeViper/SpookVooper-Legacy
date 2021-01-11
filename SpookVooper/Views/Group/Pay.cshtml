@@ -1,0 +1,50 @@
+﻿@model GroupPayModel
+@inject VooperContext context
+@{
+    ViewData["Title"] = "Group Payment";
+
+    Group group = await context.Groups.FindAsync(Model.Group);
+}
+
+<div class="container vw-100">
+
+    <h4>Group Payment</h4>
+
+    <p>You can send a direct payment to anyone with a SpookVooper account. Make sure you use
+    their SpookVooper username and get it exact.</p>
+
+    <p>Your group's credits: @group.Credits</p>
+
+    <form method="post">
+        <div class="row">
+            <div class="col-md-6">
+                <div asp-validation-summary="All" class="text-danger"></div>
+                @Html.HiddenFor(x => x.Group)
+                <div class="form-group">
+                    <label asp-for="Amount"></label>
+                    <span asp-description-for="Amount" class="form-text" style="color:#888888" />
+                    <input asp-for="Amount" class="form-control" min="1" max="@group.Credits" />
+                    <span asp-validation-for="Amount" class="text-danger"></span>
+                </div>
+                <div class="form-group">
+                    <label asp-for="User"></label>
+                    <span asp-description-for="User" class="form-text" style="color:#888888" />
+                    <input asp-for="User" class="form-control" />
+                    <span asp-validation-for="User" class="text-danger"></span>
+                </div>
+            </div>
+        </div>
+        <div class="form-group">
+            <div class="container" style="align-content:flex-start">
+                <div class="d-flex">
+                    <div class="flex-column" style="margin-right:5px; margin-left: -15px">
+                        <button type="submit" class="btn btn-outline-warning">Send Payment</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+    @section Scripts {
+        @await Html.PartialAsync("_ValidationScriptsPartial")
+    }
+</div>

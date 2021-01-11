@@ -1,0 +1,44 @@
+﻿@inject VooperContext  context;
+@inject UserManager<User> userManager;
+@using SpookVooper.Web.Extensions
+
+@{
+    ViewData["Title"] = "Notifications";
+}
+
+<head>
+    <meta property="og:title" content="SpookVooper: Notifications">
+    <meta property="og:description" content="Notification center">
+    <meta property="og:url" content="https://spookvooper.com/Notification/Index">
+</head>
+
+<div class="container vw-100">
+    <div class="col-12">
+        @if (User == null)
+        {
+            <h1>You need to log in!</h1>
+        }
+        else
+        {
+            User user = await userManager.GetUserAsync(User);
+
+            foreach (Notification not in context.Notifications.AsQueryable().Where(n => n.Target == user.Id).OrderByDescending(n => n.TimeSent))
+            {
+                not.Seen = true;
+
+                <div class="d-flex flex-column srow">
+                    <a href="@not.Linkback">
+                        <h4>@StringHelper.FormatTitle(not.Title)</h4>
+                    </a>
+                    <p>Content: @StringHelper.FormatTitle(not.Content)</p>
+                    @{ TimeSpan timePassed = DateTime.UtcNow.Subtract(not.TimeSent); }
+                    <p style="opacity:0.8; font-size:smaller;">  Posted @timePassed.ToReadableString().Split(',')[0] Ago</p>
+                </div>
+
+
+            }
+
+            await context.SaveChangesAsync();
+        }
+    </div>
+</div>

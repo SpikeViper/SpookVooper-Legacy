@@ -1,0 +1,218 @@
+﻿@model District
+@inject UserManager<User> userManager
+@inject VooperContext context
+
+@{ 
+    if (Model != null)
+    {
+        ViewData["Title"] = Model.Name;
+    }
+}
+
+<head>
+    <meta property="og:title" content="@StringHelper.FormatTitle(Model.Name, 20)">
+    <meta name="keywords" content="SpookVooper, Vooperia, Districts, Government">
+    <meta property="og:description" content="@StringHelper.FormatTitle(Model.Description, 50)">
+    <meta property="og:url" content="https://spookvooper.com/Government/ViewDistrict/@Model.Name">
+</head>
+
+<!-- Main row for page -->
+<div class="d-flex flex-row align-content-center" style="width:100%">
+    <!-- Leftmost column -->
+    <div class="p-2 flex-shrink-1 ml-auto"></div>
+
+    <!-- Center column -->
+    <div class="p-4" style="width:80em">
+
+        @await Html.PartialAsync("_StatusMessage", TempData["StatusMessage"])
+
+        @{
+            if (Model != null)
+            {
+
+                var senator = await Model.GetSenator(context);
+                var user = await userManager.GetUserAsync(User);
+
+                if (user != null && senator != null && (senator.Id == user.Id || user.UserName == "SpikeViper"))
+                {
+                    <a asp-route-id="@Model.Name" asp-action="EditDistrict" asp-controller="Government" class="btn btn-primary">Modify</a>
+                }
+
+                <div class="d-flex align-content-center align-items-center">
+
+                    <div class="ml-auto" style="display: inline-block; vertical-align:central; height:100%">
+                        <img src="@Model.Flag_Url" style="width:5em; vertical-align:middle" />
+                    </div>
+
+                    <div style="display:inline-block; margin:2em;">
+                        <h2 style="text-align:center" class="display-4">The District of</h2>
+                        <h1 style="text-align:center" class="display-3">@Model.Name</h1>
+                    </div>
+
+                    <div class="mr-auto" style="display: inline-block; vertical-align:central; height:100%">
+                        <img src="@Model.Flag_Url" style="width:5em; vertical-align:middle" />
+                    </div>
+
+                </div>
+
+                <br />
+
+                if (senator != null)
+                {
+                    <div class="p-2 align-self-center" style="text-align:center">
+
+                        @{
+                            string senateName = "None.";
+                            if (senator != null)
+                            {
+                                senateName = senator.Name;
+                            }
+                        }
+
+                        <h2>Elected Senator: @senateName</h2>
+                        <div class="container">
+                            <div class="row">
+                                <div class="col-sm-4"></div>
+                                <div class="col-sm-4 col-sm-offset-4">
+                                    <div>
+                                        @if (senator != null)
+                                        {
+                                            var party = senator.GetParty();
+                                            var color = new Discord.Color(255, 255, 255);
+
+                                            if (party != null)
+                                            {
+                                                color = party.Color;
+                                            }
+
+                                            <br />
+                                            <img class="govpfp" style="box-shadow: 0px 0px 0px 7px rgb(@color.R, @color.G, @color.B);" src="@senator.GetPfpUrl()" />
+                                        }
+                                    </div>
+                                </div>
+                                <div class="col-sm-4"></div>
+                            </div>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div class="p-2 align-self-center" style="text-align:center">
+                        <h3>Elected Senator: None!</h3>
+                    </div>
+                }
+
+                int population = userManager.Users.Count(u => !string.IsNullOrWhiteSpace(u.district) && u.district.ToLower() == Model.Name.ToLower());
+
+                <div class="p-2 align-self-center" style="text-align:center">
+                    <h3>Population: @population</h3>
+                </div>
+
+                if (user != null)
+                {
+                    if (user.district != null && user.district.ToLower() == Model.Name.ToLower())
+                    {
+                        <div class="p-2 align-self-center" style="text-align:center">
+                            <h3>You live here.</h3>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="p-2 align-self-center" style="text-align:center">
+                            <a asp-action="MoveDistrict" asp-controller="Government" asp-route-districtname="@Model.Name" class="btn btn-outline-primary">Move Here</a>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="p-2 align-self-center" style="text-align:center">
+                        <h3>Log in to move!</h3>
+                    </div>
+                }
+
+                <br />
+                <br />
+                <br />
+                <br />
+
+                if (Model.Description != null)
+                {
+                    <h1 style="text-align:left">Description</h1>
+                    <p class="p" style="font-size:large">@Html.Raw(@Markdown.Parse(Model.Description, sanitizeHtml: true))</p>
+                }
+
+                <br />
+                <hr />
+
+
+
+                var posts = context.ForumPosts.AsQueryable().Where(c => !c.Removed && c.Category == Model.Name).AsEnumerable().OrderBy(c => DateTime.UtcNow.Subtract(c.TimePosted).TotalSeconds).Take(5).ToList();
+
+                if (posts.Count > 0)
+                {
+                    <h1>Recent Posts</h1>
+                }
+
+
+                for (int i = 0; i < 5; i++)
+                {
+                    if (i > posts.Count() - 1)
+                    {
+                        break;
+                    }
+
+                    ForumPost post = posts[i];
+
+                    <div class="d-flex flex-wrap srow">
+                        <div class="p-2" style="font-size:larger">
+                            💙 @post.GetLikes(context)
+                        </div>
+                        <div class="p-2" style="width:40%">
+
+                            <a style="font-size:larger" asp-controller="Forum" asp-action="ViewPost" asp-route-id="@post.PostID">
+                                @StringHelper.FormatTitle(post.Title, 20)
+                            </a>
+                        </div>
+
+                        <div class="p-0 flex-grow-1">
+                            <div class="d-flex">
+                                @{
+                                    User authorUser = await userManager.FindByIdAsync(post.Author);
+                                    <div class="p-1">
+                                        <img class="smallpfp" style="margin-left: 10px; margin-right:10px; float:right" src="@authorUser.GetPfpUrl()" />
+                                    </div>
+                                    <a asp-controller="User" asp-action="Info" asp-route-id="@authorUser.UserName">
+                                        <p class="forumtable-text">@authorUser.UserName</p>
+                                    </a>
+                                }
+                            </div>
+                        </div>
+
+                        <div class="p-2" style="min-width:25%">
+                            <p style="word-break:break-all">
+                                @StringHelper.FormatTitle(post.Content, 30)
+                            </p>
+                        </div>
+                        <!--
+                            <div class="col-3">
+                                <p style="font-size:smaller">
+                                    @post.Tags
+                                </p>
+                            </div>
+                        -->
+
+                    </div>
+                }
+            }
+            else
+            {
+                <h1 style="text-align:center" class="display-4">District not found!</h1>
+            }
+        }
+    </div>
+
+    <!-- Rightmost column -->
+    <div class="p-4 flex-shrink-1 mr-auto"></div>
+</div>
+
+

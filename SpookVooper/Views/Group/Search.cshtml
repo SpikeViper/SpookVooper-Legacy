@@ -1,0 +1,63 @@
+﻿@model GroupSearchModel
+@inject VooperContext context
+@{
+    ViewData["Title"] = "Group Search";
+}
+
+<div class="container vw-100">
+    <div class="col-12">
+        <h1 style="text-align:left" class="display-4">Group Search</h1>
+
+        <form method="post">
+            <div>
+                <div asp-validation-summary="All" class="text-danger"></div>
+                <div class="form-group">
+                    <input asp-for="search" class="form-control" />
+                </div>
+                <button type="submit" class="btn btn-primary">Search</button>
+            </div>
+        </form>
+
+        <br />
+
+        @{
+            if (!String.IsNullOrWhiteSpace(Model.search))
+            {
+                List<Group> groups = context.Groups.AsEnumerable().Where(u => u.Name.ToLower().Contains(Model.search.ToLower())).OrderByDescending(u => u.Name.ToLower().StartsWith(Model.search.ToLower())).ToList();
+
+                if (groups != null && groups.Count > 0)
+                {
+                    <table id="userTable">
+                        @foreach (Group group in groups)
+                        {
+                            <tr>
+
+                                <td>
+                                    <a asp-controller="Group" asp-action="View" asp-route-groupid="@group.Id">
+                                        <img class="smallpfp" style="margin-right: 10px" src="@group.Image_Url" />
+                                    </a>
+                                </td>
+                                <td style="font-size:30px;">
+                                    <a asp-controller="Group" asp-action="View" asp-route-groupid="@group.Id">
+                                        @group.Name
+                                    </a>
+                                </td>
+
+                            </tr>
+                        }
+                    </table>
+                }
+                else
+                {
+                    <h1 style="text-align:left">No groups found!</h1>
+                }
+            }
+
+
+        }
+
+        @section Scripts {
+            @await Html.PartialAsync("_ValidationScriptsPartial")
+        }
+    </div>
+</div>

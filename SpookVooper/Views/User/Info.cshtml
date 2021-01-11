@@ -1,0 +1,177 @@
+﻿@model User
+@inject UserManager<User> userManager
+@inject VooperContext context;
+
+@if (Model != null)
+{
+    <head>
+        <meta property="og:title" content="@Model.UserName">
+        <meta name="keywords" content="SpookVooper, User, @Model.UserName">
+        <meta property="og:description" content="@Model.description">
+        <meta property="og:url" content="https://spookvooper.com/User/Info?svid=@Model.Id">
+        <meta property="og:image" content="@Model.GetPfpUrl()">
+        <meta name="twitter:image" content="@Model.GetPfpUrl()">
+    </head>
+}
+else
+{
+    <head>
+        <meta property="og:title" content="Null user">
+        <meta name="keywords" content="SpookVooper, User">
+        <meta property="og:description" content="User could not be found!">
+        <meta property="og:url" content="https://spookvooper.com/">
+        <meta property="og:image" content="">
+        <meta name="twitter:image" content="">
+    </head>
+}
+
+<div class="container vw-100">
+    <div class="col-12">
+        @{
+
+            string title = "Citizen";
+
+            if (Model != null)
+            {
+
+                ViewData["Title"] = Model.UserName;
+
+                if (Model.IsEmperor())
+                {
+                    title = "Emperor";
+                }
+                else if (Model.IsPrimeMinister())
+                {
+                    title = "Prime Minister";
+                }
+                else if (Model.IsJustice())
+                {
+                    title = "Justice";
+                }
+                else if (await Model.IsSenator())
+                {
+                    title = "Senator";
+                }
+
+
+                var user = await userManager.GetUserAsync(User);
+
+                if (user != null && Model.Id == user.Id)
+                {
+                    <a asp-action="SetInfo" asp-controller="User" class="btn btn-primary">Modify</a>
+                }
+
+
+
+                <h2 style="text-align:center" class="display-4">@title</h2>
+                <h1 style="text-align:center" class="display-4">@Model.UserName</h1>
+
+                <div class="container">
+                    <div class="row">
+                        <div class="col-sm-4"></div>
+                        <div class="col-sm-4 col-sm-offset-4">
+                            <div>
+                                @{
+                                    var party = Model.GetParty();
+                                    var color = new Discord.Color(255, 255, 255);
+
+                                    if (party != null)
+                                    {
+                                        color = party.Color;
+                                    }
+
+                                    <br />
+                                    <img class="govpfp" style="box-shadow: 0px 0px 0px 7px rgb(@color.R, @color.G, @color.B);" src="@Model.GetPfpUrl()" />
+                                }
+                            </div>
+                        </div>
+                        <div class="col-sm-4"></div>
+                    </div>
+                </div>
+
+                if (!String.IsNullOrWhiteSpace(Model.district))
+                {
+                    <p class="m-2" style="text-align:center; font-size:x-large">District: @Model.district</p>
+                }
+                else
+                {
+                    <p class="m-2" style="text-align:center; font-size:x-large">District: Offworld</p>
+                }
+
+                if (Model.description != null)
+                {
+                    <h1 class="m-2" style="text-align:left">Bio</h1>
+                    <p class="p m-2" style="font-size:large">@Html.Raw(@Markdown.Parse(Model.description, sanitizeHtml: true))</p>
+                }
+
+                <br />
+                <hr />
+
+                <h1>Recent Posts</h1>
+
+                var posts = context.ForumPosts.AsQueryable().Where(c => !c.Removed && c.Author == Model.Id).AsEnumerable().OrderBy(c => DateTime.UtcNow.Subtract(c.TimePosted).TotalSeconds).Take(5).ToList();
+
+                for (int i = 0; i < 5; i++)
+                {
+                    if (i > posts.Count() - 1)
+                    {
+                        break;
+                    }
+
+                    ForumPost post = posts[i];
+
+                    <div class="d-flex flex-wrap srow">
+                        <div class="p-2" style="font-size:larger">
+                            💙 @post.GetLikes(context)
+                        </div>
+                        <div class="p-2" style="width:40%">
+
+                            <a style="font-size:larger" asp-controller="Forum" asp-action="ViewPost" asp-route-id="@post.PostID">
+                                @StringHelper.FormatTitle(post.Title, 20)
+                            </a>
+                        </div>
+
+                        <div class="p-0 flex-grow-1">
+                            <div class="d-flex">
+                                @{
+                                    User authorUser = await userManager.FindByIdAsync(post.Author);
+                                    <div class="p-1">
+                                        <img class="smallpfp" style="margin-left: 10px; margin-right:10px; float:right" src="@authorUser.GetPfpUrl()" />
+                                    </div>
+                                    <a asp-controller="User" asp-action="Info" asp-route-id="@authorUser.UserName">
+                                        <p class="forumtable-text">@authorUser.UserName</p>
+                                    </a>
+                                }
+                            </div>
+                        </div>
+
+                        <div class="p-2" style="min-width:25%">
+                            <p style="word-break:break-all">
+                                @StringHelper.FormatTitle(post.Content, 30)
+                            </p>
+                        </div>
+                        <!--
+                        <div class="col-3">
+                            <p style="font-size:smaller">
+                                @post.Tags
+                            </p>
+                        </div>
+                    -->
+
+                    </div>
+
+
+
+
+
+                }
+            }
+            else
+            {
+                <h1 style="text-align:center" class="display-4">User not found!</h1>
+            }
+        }
+    </div>
+</div>
+
+

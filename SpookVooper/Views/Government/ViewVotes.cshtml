@@ -1,0 +1,78 @@
+﻿@model Election
+@inject UserManager<User> userManager
+@inject VooperContext context
+
+@{
+    string title = "Could not find district!";
+
+    if (Model != null)
+    {
+        title = Model.District + " " + Model.Type + " Votes";
+        ViewData["Title"] = title;
+    }
+}
+
+<head>
+    <meta property="og:title" content="@title">
+    <meta name="keywords" content="SpookVooper, Vooperia, Districts, Government, Elections">
+    <meta property="og:description" content="Elections results">
+    <meta property="og:url" content="https://spookvooper.com/Government/ViewVotes?id=@Model.Id">
+</head>
+
+<!-- Main row for page -->
+<div class="d-flex flex-row align-content-center" style="width:100%">
+    <!-- Leftmost column -->
+    <div class="p-2 flex-shrink-1 ml-auto"></div>
+
+    <!-- Center column -->
+    <div class="p-4" style="width:80em">
+
+        @await Html.PartialAsync("_StatusMessage", TempData["StatusMessage"])
+
+        <table class="table">
+            <tr>
+                <th>Name</th>
+                <th>Total XP</th>
+                <th>Balance</th>
+                <th>District</th>
+                <th>Vote Time</th>
+                <th>Invalid</th>
+                <th>Options</th>
+            </tr>
+            @foreach (var vote in context.ElectionVotes.AsQueryable().Where(x => x.Election_Id == Model.Id))
+            {
+                User voter = await context.Users.FindAsync(vote.User_Id);
+
+                if (voter != null)
+                {
+                    <tr>
+                        <td>@voter.UserName</td>
+                        <td>@voter.GetTotalXP()</td>
+                        <td>@voter.Credits</td>
+                        <td>@voter.district</td>
+                        <td>@vote.Date.ToLocalTime().ToShortDateString() @@ @vote.Date.ToLocalTime().ToShortTimeString()</td>
+                        <td>@vote.Invalid</td>
+                        @if (!vote.Invalid)
+                        {
+                            <td><a class="btn btn-outline-danger" asp-controller="Government" asp-action="InvalidateVote" asp-route-id="@vote.Id">Invalidate</a></td>
+                        }
+                        else
+                        {
+                            <td><a class="btn btn-outline-warning" asp-controller="Government" asp-action="InvalidateVote" asp-route-id="@vote.Id">Revalidate</a></td>
+                        }
+                    </tr>
+                }
+
+            }
+        </table>
+
+
+
+
+    </div>
+
+    <!-- Rightmost column -->
+    <div class="p-4 flex-shrink-1 mr-auto"></div>
+</div>
+
+

@@ -1,0 +1,76 @@
+﻿@model IssueIPOModel
+@inject VooperContext context
+@inject UserManager<User> userManager
+@{
+    ViewData["Title"] = "Company IPO";
+
+    User user = await userManager.GetUserAsync(User);
+    Group group = context.Groups.FirstOrDefault(g => g.Group_Category == Group.GroupTypes.Company && g.Id == Model.Group);
+}
+
+@if (await group.HasPermission(user, "eco"))
+{
+
+
+    <div class="container vw-100">
+        <div class="col-12">
+            @await Html.PartialAsync("_StatusMessage", TempData["StatusMessage"])
+            <h4>Submit IPO</h4>
+
+            <p>An IPO is the initial selling of stock from your company. You can choose how much stock to sell, and how much stock you would like to keep. Remember, anyone with over 50% stock will <b>automatically</b> be given full group permissions!</p>
+            <p>
+                Stock value is simply the company value divided by number of stock. Of course, in the market, people will choose buy and sell prices on their own, which will inflate or deflate your company value. The lowest value you can IPO at
+                is 1 Credit, so for example a company worth ¢10,000 could issue 10,000 stock.
+            </p>
+            <br />
+            <hr />
+
+            <p>Your company value: <b>¢@group.Credits</b></p>
+            <p>Your maximum IPO: <b>@((int)Math.Floor(group.Credits)) stock</b></p>
+        </div>
+
+        <form method="post">
+            <div class="row">
+                <div class="col-md-6">
+                    <div asp-validation-summary="All" class="text-danger"></div>
+                    @Html.HiddenFor(x => x.Group)
+                    <div class="form-group">
+                        <label asp-for="Ticker"></label>
+                        <span asp-description-for="Ticker" class="form-text" style="color:#888888" />
+                        <input asp-for="Ticker" class="form-control" />
+                        <span asp-validation-for="Ticker" class="text-danger"></span>
+                    </div>
+                    <div class="form-group">
+                        <label asp-for="Amount"></label>
+                        <span asp-description-for="Amount" class="form-text" style="color:#888888" />
+                        <input asp-for="Amount" class="form-control" min="0" max="@((int)Math.Floor(group.Credits))" />
+                        <span asp-validation-for="Amount" class="text-danger"></span>
+                    </div>
+                    <div class="form-group">
+                        <label asp-for="Keep"></label>
+                        <span asp-description-for="Keep" class="form-text" style="color:#888888" />
+                        <input asp-for="Keep" class="form-control" min="0" max="@((int)Math.Floor(group.Credits))"/>
+                        <span asp-validation-for="Keep" class="text-danger"></span>
+                    </div>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="container" style="align-content:flex-start">
+                    <div class="d-flex">
+                        <div class="flex-column" style="margin-right:5px; margin-left: -15px">
+                            <button type="submit" class="btn btn-outline-warning">Issue Stock</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+        @section Scripts {
+            @await Html.PartialAsync("_ValidationScriptsPartial")
+        }
+    </div>
+
+}
+else
+{
+    <h4>You don't have permission to do this!</h4>
+}

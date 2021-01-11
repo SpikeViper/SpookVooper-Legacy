@@ -1,0 +1,229 @@
+﻿@model Group
+@inject VooperContext context
+@inject UserManager<User> userManager
+
+@{
+    ViewData["Title"] = "Group Admin";
+}
+
+@{
+    User user = await userManager.GetUserAsync(User);
+}
+
+<div class="container vw-100">
+    <div class="col-12">
+
+        @await Html.PartialAsync("_StatusMessage", TempData["StatusMessage"])
+
+        <h3 style="text-align:center">@ViewData["Title"]</h3>
+        <h2 style="text-align:center">@Model.Name</h2>
+
+        <div class="row">
+            <div class="col-4"></div>
+            <div class="col-4">
+                @await Component.InvokeAsync("GroupImage", Model)
+            </div>
+            <div class="col-4"></div>
+        </div>
+
+        <br />
+        <hr />
+        <br />
+
+        <form method="post">
+
+            @Html.HiddenFor(x => x.Id)
+
+            <div class="row">
+                <div class="col-md-6">
+
+                    <h4>Group Info</h4>
+
+                    <div asp-validation-summary="All" class="text-danger"></div>
+                    <div class="form-group">
+                        <label asp-for="Name"></label>
+                        <input asp-for="Name" class="form-control" />
+                        <span asp-validation-for="Name" class="text-danger"></span>
+                    </div>
+                    <div class="form-group">
+                        <label asp-for="Group_Category"></label>
+                        <br />
+                        <select class="form-control" asp-for="Group_Category" asp-items="Group.GetCategoryListForDropdown()" disabled></select>
+                        @Html.HiddenFor(x => x.Group_Category)
+                    </div>
+                    <div class="form-group">
+                        <label asp-for="District_Id"></label>
+                        <br />
+                        <select class="form-control" asp-for="District_Id" asp-items="District.GetDistrictListForDropdown(context)"></select>
+                    </div>
+                    @if (await Model.HasPermission(user, "Description"))
+                    {
+                        <div class="form-group">
+                            <label asp-for="Description"></label>
+                            <textarea asp-for="Description" rows="6" class="form-control"> </textarea>
+                            <span asp-validation-for="Description" class="text-danger"></span>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="form-group">
+                            <label asp-for="Description"></label>
+                            <textarea asp-for="Description" rows="6" class="form-control" disabled> </textarea>
+                            <span asp-validation-for="Description" class="text-danger"></span>
+                        </div>
+
+                        @Html.HiddenFor(x => x.Description)
+                    }
+
+                    @if (Model.Owner_Id == user.Id)
+                    {
+                        <div class="form-group">
+                            <label asp-for="Image_Url"></label>
+                            <input asp-for="Image_Url" class="form-control" />
+                            <span asp-validation-for="Image_Url" class="text-danger"></span>
+                        </div>
+                        <div class="form-group">
+                            <input type="checkbox" asp-for="Open" class="form-check-inline" />
+                            <label asp-for="Open"></label>
+                            <span asp-Description-for="Open" class="form-control" />
+                            <span asp-validation-for="Open" class="text-danger"></span>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="form-group">
+                            <label asp-for="Image_Url"></label>
+                            <input asp-for="Image_Url" class="form-control" disabled />
+                            <span asp-validation-for="Image_Url" class="text-danger"></span>
+                        </div>
+
+                        @Html.HiddenFor(x => x.Image_Url)
+                    }
+                </div>
+
+                <div class="col-md-6">
+                    <h4>Manage Members</h4>
+
+                    <br />
+                    <div class="container">
+                        <div class="row">
+                            @foreach (User member in await Model.GetUsers())
+                            {
+                                <div class="col-6 srow">
+                                    <div class="p-1">
+                                        <img class="smallpfp" style="margin-left: 10px; margin-right:10px; float:right" src="@member.GetPfpUrl()" />
+                                    </div>
+                                    <a asp-controller="User" asp-action="Info" asp-route-id="@member.UserName">
+                                        <p class="forumtable-text">@member.UserName</p>
+                                    </a>
+                                </div>
+                                <div class="col-6 srow">
+                                    <a asp-action="ViewMemberRoles" asp-controller="Group" asp-route-groupid="@Model.Id" asp-route-userid="@member.Id" class="btn btn-outline-primary">Roles</a>
+                                    @if (await Model.HasPermission(user, "kick"))
+                                    {
+                                        <a asp-action="ManageUser" asp-controller="Group" asp-route-groupid="@Model.Id" asp-route-userid="@member.Id" asp-route-operation="kick" class="btn btn-outline-warning">Kick</a>
+                                    }
+                                    @if (await Model.HasPermission(user, "ban"))
+                                    {
+                                        <a asp-action="ManageUser" asp-controller="Group" asp-route-groupid="@Model.Id" asp-route-userid="@member.Id" asp-route-operation="ban" class="btn btn-outline-danger">Ban</a>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            @Html.HiddenFor(x => x.Owner_Id)
+
+            <div class="form-group">
+                <div class="container" style="align-content:flex-start">
+                    <div class="d-flex">
+                        <div class="flex-column" style="margin-right:5px; margin-left: -15px">
+                            <button type="submit" class="btn btn-primary">Save</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+
+        <br />
+        <hr />
+        <br />
+    </div>
+
+    <div class="row">
+        <div class="col-12 align-content-center text-center">
+            <h4 style="text-align:center">Role Management</h4>
+            <a asp-action="CreateRole" asp-controller="Group" asp-route-groupid="@Model.Id" class="btn btn-outline-primary m-2">Create Role</a>
+            <br />
+        </div>
+    </div>
+
+    <br />
+    <br />
+
+    <div class="row srow">
+        @foreach (GroupRole role in context.GroupRoles.AsQueryable().Where(r => r.GroupId == Model.Id).OrderByDescending(r => r.Weight))
+        {
+            <div class="col-3">
+                <a>@role.Name</a>
+            </div>
+            <div class="col-3">
+                <p>Members: @await role.GetMemberCount()</p>
+            </div>
+            <div class="col-3">
+                <p>Perms: @role.Permissions.Replace("|", ", ")</p>
+            </div>
+            <div class="col-3">
+                @if (await Model.HasPermission(user, "createrole"))
+                {
+                    <a asp-action="CreateRole" asp-controller="Group" asp-route-groupid="@Model.Id" asp-route-roleid="@role.RoleId" class="btn btn-outline-warning">Edit</a>
+                    <a asp-action="DeleteRole" asp-controller="Group" asp-route-groupid="@Model.Id" asp-route-roleid="@role.RoleId" class="btn btn-outline-danger">Delete</a>
+                }
+                <a asp-action="RoleMembership" asp-controller="Group" asp-route-groupid="@Model.Id" asp-route-roleid="@role.RoleId" class="btn btn-outline-primary">Membership</a>
+            </div>
+        }
+    </div>
+
+    <br />
+    <br />
+
+    <div class="row">
+        <div class="col-12 align-content-center text-center">
+            <h4 style="text-align:center">Credit Management</h4>
+            <h5 style="text-align:center">Credits: @Math.Round(Model.Credits, 2)</h5>
+            <br />
+
+            <a asp-action="Pay" asp-controller="Group" asp-route-groupid="@Model.Id" class="btn btn-outline-primary m-2">Send Payment</a>
+
+            @if (Model.Group_Category == Group.GroupTypes.Company)
+            {
+                <a asp-action="IssueStock" asp-controller="Group" asp-route-groupid="@Model.Id" class="btn btn-outline-primary m-2">Issue Stock</a>
+            }
+        </div>
+    </div>
+
+    <br />
+    <br />
+
+    @if (await Model.IsOwnerAsync(user))
+    {
+        <div class="row">
+            <div class="col-12 align-content-center text-center mb-2">
+                <a asp-action="Delete" asp-controller="Group" asp-route-groupid="@Model.Id" class="btn btn-danger">Delete Group Permanently</a>
+            </div>
+            
+            <div class="col-12 align-content-center text-center">
+                <a asp-action="TransferGroup" asp-controller="Group" asp-route-group_svid="@Model.Id" class="btn btn-danger">Transfer Group</a>
+            </div>
+        </div>
+    }
+
+    <br />
+    <br />
+
+    @section Scripts {
+        @await Html.PartialAsync("_ValidationScriptsPartial")
+    }
+</div>

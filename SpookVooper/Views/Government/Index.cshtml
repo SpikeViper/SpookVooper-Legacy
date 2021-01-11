@@ -1,0 +1,142 @@
+﻿@model SpookVooper.Web.Models.GovernmentViewModels.GovernmentIndexModel;
+@using Discord.WebSocket;
+@inject VooperContext context
+
+@{
+    ViewData["Title"] = "Government";
+}
+
+<head>
+    <meta property="og:title" content="SpookVooper: Government">
+    <meta property="og:description" content="The government of the Great nation Vooperia!">
+    <meta property="og:url" content="https://spookvooper.com/Government/Index">
+</head>
+
+<div class="container vw-100">
+    <div class="col-12">
+        <h1 style="text-align:center" class="display-4">The Vooperian Government</h1>
+        <br />
+
+        <div class="row">
+            <div class="col-sm-4"></div>
+            <div class="col-sm-4 col-sm-offset-4">
+                <div>
+                    @{
+                        var presParty = Model.server.GetUser(Model.president.Id).Roles.FirstOrDefault(r => r.Name.ToLower().Contains("party"));
+                        var presColor = new Discord.Color(3, 252, 244);
+
+                        if (presParty != null)
+                        {
+                            presColor = presParty.Color;
+                        }
+                    }
+
+                    <h2 style="text-align:center">Emperor @Model.president.Username</h2>
+                    <br />
+                    <img class="govpfp" style="box-shadow: 0px 0px 0px 7px rgb(@presColor.R, @presColor.G, @presColor.B);" src="@Model.president.GetAvatarUrl()" />
+                </div>
+            </div>
+            <div class="col-sm-4"></div>
+        </div>
+
+        <hr />
+        <br />
+
+        @if (Model.vicePresident != null)
+        {
+        <div class="row">
+            <div class="col-sm-4"></div>
+            <div class="col-sm-4 col-sm-offset-4">
+                <div>
+                    @{
+                        var vpresParty = Model.server.GetUser(Model.vicePresident.Id).Roles.FirstOrDefault(r => r.Name.ToLower().Contains("party"));
+                        var vpresColor = new Discord.Color(3, 252, 244);
+
+                        if (vpresParty != null)
+                        {
+                            vpresColor = vpresParty.Color;
+                        }
+                    }
+                    <h2 style="text-align:center">Prime Minister @Model.vicePresident.Username</h2>
+                    <br />
+                    <img class="govpfp" style="box-shadow: 0px 0px 0px 7px rgb(@vpresColor.R, @vpresColor.G, @vpresColor.B);" src="@Model.vicePresident.GetAvatarUrl()" />
+                </div>
+            </div>
+            <div class="col-sm-4"></div>
+        </div>
+
+
+        <hr />
+        <br />
+                        }
+
+        @* This area creates the justices *@
+        <h2 style="text-align:center">Justices</h2>
+        <br />
+        <div class="d-flex justify-content-center flex-wrap">
+            @foreach (var user in Model.justices)
+            {
+                <div class="p-2">
+                    <div style="width:150px">
+                        <img class="govpfp" src="@user.GetAvatarUrl()" />
+                        <h4 style="text-align:center; overflow-wrap:break-word;">@user.Username</h4>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <hr />
+        <br />
+        <h2 style="text-align:center">Senators</h2>
+        <br /> 
+        @* This area creates the senate pictures *@
+        <div class="d-flex justify-content-center flex-wrap">
+
+            @{
+                List<SocketRole> parties = new List<SocketRole>();
+
+                var users = await District.GetAllSenatorsAsync(context);
+
+                foreach (var user in users)
+                {
+                    var Party = user.GetDiscordRoles().FirstOrDefault(r => r.Name.ToLower().Contains("party"));
+
+                    var color = new Discord.Color(3, 252, 244);
+
+                    if (Party != null)
+                    {
+                        color = Party.Color;
+                        parties.Add(Party);
+                    }
+                    else
+                    {
+                        parties.Add(Model.server.Roles.Single(r => r.Name == "@everyone"));
+                    }
+
+                    <div class="p-2">
+                        <div style="width:150px">
+                            <img class="govpfp" style="box-shadow: 0px 0px 0px 7px rgb(@color.R, @color.G, @color.B);min-width:128px;min-height:128px;" src="@user.Image_Url" />
+                            <hr />
+                            <p class="text-center">@user.district</p>
+                            <h4 style="text-align:center; overflow-wrap:break-word;">@user.Name</h4>
+                        </div>
+                    </div>
+                }
+            }
+        </div>
+        <br />
+
+        @* This area creates the dot diagram *@
+
+        <div class="d-flex justify-content-center flex-wrap">
+            @foreach (var party in parties.OrderByDescending(p => p.Name))
+            {
+                var bcolor = party.Color;
+
+                <div class="p-1">
+                    <span class="dot" style="background-color: rgb(@bcolor.R, @bcolor.G, @bcolor.B);"></span>
+                </div>
+            }
+        </div>
+    </div>
+</div>

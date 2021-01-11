@@ -1,0 +1,71 @@
+﻿@model SpookVooper.Web.Models.ExchangeViewModels.CreateStockModel
+@{
+    ViewData["Title"] = "SVSE New Stock Listing";
+}
+
+<body style="background-color:#040d14">
+    <!-- Main row for page -->
+    <div class="d-flex flex-row align-content-center" style="width:100%;">
+        <!-- Leftmost column -->
+        <div class="p-4 flex-shrink-1 ml-auto"></div>
+        <!-- Center column -->
+        <div class="p-4" style="width:80em">
+            <div class="col-12">
+                <h4>@ViewData["Title"]</h4>
+                @await Html.PartialAsync("_StatusMessage", TempData["StatusMessage"])
+
+                <form method="post">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div asp-validation-summary="All" class="text-danger"></div>
+                            <div class="form-group">
+                                <label asp-for="Ticker"></label>
+                                <span asp-description-for="Ticker" class="form-text" style="color:#888888" />
+                                <input asp-for="Ticker" class="form-control" />
+                                <span asp-validation-for="Ticker" class="text-danger"></span>
+                            </div>
+                            <div class="form-group">
+                                <label asp-for="Group_Id"></label>
+                                <span asp-description-for="Group_Id" class="form-text" style="color:#888888" />
+                                <input asp-for="Group_Id" class="form-control" />
+                                <span asp-validation-for="Group_Id" class="text-danger"></span>
+                            </div>
+                            <div class="form-group">
+                                <label asp-for="Amount"></label>
+                                <span asp-description-for="Amount" class="form-text" style="color:#888888" />
+                                <input asp-for="Amount" class="form-control" />
+                                <span asp-validation-for="Amount" class="text-danger"></span>
+                            </div>
+                            <div class="form-group">
+                                <label asp-for="Keep"></label>
+                                <span asp-description-for="Keep" class="form-text" style="color:#888888" />
+                                <input asp-for="Keep" class="form-control" />
+                                <span asp-validation-for="Keep" class="text-danger"></span>
+                            </div>
+                            <div class="form-group">
+                                <label asp-for="Initial_Value"></label>
+                                <span asp-description-for="Initial_Value" class="form-text" style="color:#888888" />
+                                <input asp-for="Initial_Value" class="form-control" />
+                                <span asp-validation-for="Initial_Value" class="text-danger"></span>
+                            </div>
+                            <div class="form-group">
+                                <div class="container" style="align-content:flex-start">
+                                    <div class="d-flex">
+                                        <div class="flex-column" style="margin-right:5px; margin-left: -15px">
+                                            <button type="submit" class="btn btn-primary">Issue</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>             
+                </form>
+            </div>
+            @section Scripts {
+                @await Html.PartialAsync("_ValidationScriptsPartial")
+            }
+        </div>
+        <!-- Rightmost column -->
+        <div class="p-4 flex-shrink-1 mr-auto"></div>
+    </div>
+</body>

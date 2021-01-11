@@ -1,0 +1,65 @@
+﻿@model NewsPost
+@inject VooperContext context
+@using  SpookVooper.Web.Extensions
+
+@{
+    User author = await context.Users.FindAsync(Model.AuthorID);
+    Group group = await context.Groups.FindAsync(Model.GroupID);
+}
+
+@{
+    ViewData["Title"] = Model.Title;
+}
+
+<head>
+    <meta property="og:title" content="@Model.Title">
+    <meta name="keywords" content="@Model.Tags">
+    <meta property="og:description" content="@Model.Content">
+    <meta property="og:url" content="https://spookvooper.com/News/View?postid=@Model.PostID">
+    <meta property="og:image" content="@Model.ImageURL">
+    <meta name="twitter:image" content="@Model.ImageURL">
+</head>
+
+<!-- Main container -->
+<div class="d-flex flex-row align-content-center" style="width:100%">
+    <!-- Left column -->
+    <div class="p-4 flex-shrink-1 ml-auto"></div>
+    <!-- Center column -->
+    <div class="p-4" style="width:80em;">
+        <!-- Title area -->
+        <div class="newsviewbox">
+            <div class="row justify-content-between" style="padding:20px">
+                <div style="width:80%">
+                    <h1 class="display-4" style="font-size:40px">@Model.Title</h1>
+                    <h5>
+                        by
+                        <a asp-controller="User" asp-action="Info" asp-route-svid="@Model.AuthorID">
+                            <i style="color:white">
+                                @author.UserName
+                            </i>
+                        </a>
+                        with
+                        <a asp-controller="Group" asp-action="View" asp-route-groupid="@Model.GroupID">
+                            <b style="color:white">
+                                @group.Name
+                            </b>
+                        </a>
+                    </h5>
+                </div>
+
+                <img class="newspostgroupimage" src="@group.Image_Url" />
+            </div>
+            <!-- Content area -->
+            <hr />
+            <br />
+            <img class="newsinnerimage" src="@Model.ImageURL" />
+            <br />
+            <br />
+            <div class="newscontent">
+                @Html.Raw(@Markdown.Parse(Model.Content, sanitizeHtml: true))
+            </div>
+        </div>
+    </div>
+    <!-- Right column -->
+    <div class="p-4 flex-shrink-1 mr-auto"></div>
+</div>

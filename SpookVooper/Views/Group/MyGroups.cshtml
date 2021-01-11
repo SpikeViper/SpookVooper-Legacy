@@ -1,0 +1,53 @@
+﻿@inject VooperContext context
+@inject UserManager<User> userManager
+@{
+    ViewData["Title"] = "My Groups";
+
+    User user = await userManager.GetUserAsync(User);
+}
+
+<div class="container">
+    <div class="row">
+        <div class="col-6">
+            <h2>Groups Owned:</h2>
+            <br />
+            <div class="container">
+                <div class="row">
+                    @foreach (Group group in await user.GetOwnedGroupsAsync())
+                    {
+                        <div class="col-12 srow">
+                            <div class="p-1">
+                                <img class="smallpfp" style="margin-left: 10px; margin-right:10px; float:right" src="@group.Image_Url" />
+                            </div>
+                            <a asp-controller="Group" asp-action="View" asp-route-groupid="@group.Id">
+                                <p class="forumtable-text">@group.Name</p>
+                            </a>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+        <div class="col-6">
+            <h2>Member Of:</h2>
+            <br />
+            <div class="container">
+                <div class="row">
+                    @foreach (Group group in await user.GetJoinedGroupsAsync())
+                    {
+                        if (group != null)
+                        {
+                            <div class="col-12 srow">
+                                <div class="p-1">
+                                    <img class="smallpfp" style="margin-left: 10px; margin-right:10px; float:right" src="@group.Image_Url" />
+                                </div>
+                                <a asp-controller="Group" asp-action="View" asp-route-groupid="@group.Id">
+                                    <p class="forumtable-text">@group.Name</p>
+                                </a>
+                            </div>
+                        }
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

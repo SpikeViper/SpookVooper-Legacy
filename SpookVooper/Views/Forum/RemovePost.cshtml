@@ -1,0 +1,24 @@
+﻿@model RemovePostModel
+@{
+    ViewData["Title"] = "Remove Post";
+}
+
+<div class="container vw-100">
+    <div class="col-12">
+        <h4>@ViewData["Title"]</h4>
+        @await Html.PartialAsync("_StatusMessage", TempData["StatusMessage"])
+
+
+    <form method="post">
+        @Html.HiddenFor(x => x.PostID)
+
+        <h1>Are you sure?</h1>
+
+        <br/>
+        <button type="submit" class="btn btn-outline-danger">Delete</button>
+    </form>
+    </div>
+    @section Scripts {
+        @await Html.PartialAsync("_ValidationScriptsPartial")
+    }
+</div>

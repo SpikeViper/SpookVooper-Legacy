@@ -1,0 +1,79 @@
+﻿@model CandidatePass
+@inject VooperContext context
+@{
+    ViewData["Title"] = "Issue Candidate Pass";
+}
+
+<div class="container vw-100">
+    <div class="col-12">
+        <h4>@ViewData["Title"]</h4>
+        @await Html.PartialAsync("_StatusMessage", TempData["StatusMessage"])
+
+
+        <form method="post">
+            <div class="row">
+                <div class="col-md-6">
+                    <div asp-validation-summary="All" class="text-danger"></div>
+                    <div class="form-group">
+                        <label asp-for="UserId"></label>
+                        <span asp-description-for="UserId" class="form-text" style="color:#888888" />
+                        <input id="user-input" asp-for="UserId" class="form-control" />
+                        <span asp-validation-for="UserId" class="text-danger"></span>
+                        <span id="user-text" class="form-text" style="color:#888888" />
+                    </div>
+                    <div class="form-group">
+                        <label asp-for="Type"></label>
+                        <span asp-description-for="Type" class="form-text" style="color:#888888" />
+                        <br />
+                        <select class="form-control" asp-for="Type" asp-items="Election.GetElectionTypesListForDropdown()"></select>
+                    </div>
+                    <div class="form-group">
+                        <label asp-for="District"></label>
+                        <span asp-description-for="District" class="form-text" style="color:#888888" />
+                        <br />
+                        <select class="form-control" asp-for="District" asp-items="District.GetDistrictListForDropdown(context)"></select>
+                    </div>
+                    <div class="form-group">
+                        <input type="checkbox" asp-for="Blacklist" class="form-check-inline" />
+                        <label asp-for="Blacklist"></label>
+                        <span asp-description-for="Blacklist" class="form-text" style="color:#888888" />
+                        <span asp-validation-for="Blacklist" class="text-danger"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <div class="container" style="align-content:flex-start">
+                    <div class="d-flex">
+                        <div class="flex-column" style="margin-right:5px; margin-left: -15px">
+                            <button type="submit" class="btn btn-primary">Issue</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+    @section Scripts {
+        @await Html.PartialAsync("_ValidationScriptsPartial")
+    }
+</div>
+
+<script src="~/lib/jquery/dist/jquery.min.js"></script>
+<script>
+
+    $('#user-input').on("change keyup paste", OnInput);
+
+    function OnInput() {
+
+        var box = $('#user-input');
+        var text = $('#user-text');
+
+        var svid = box.val();
+
+        $.getJSON("/Api/User/GetUser?svid=" + svid, function (data) {
+            if (data != null) {
+                text.text(data.userName);
+            }
+        }).fail(function () { text.text("No user found.") });
+    }
+</script>

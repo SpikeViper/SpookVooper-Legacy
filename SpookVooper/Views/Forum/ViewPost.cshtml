@@ -1,0 +1,404 @@
+﻿@model ForumPost
+@inject UserManager<User> userManager
+@inject VooperContext context
+@Html.AntiForgeryToken()
+@{
+    ViewData["Title"] = @StringHelper.FormatTitle(Model.Title, 10);
+}
+<head>
+    <meta property="og:title" content="@Html.Raw(@StringHelper.FormatTitle(Model.Title, 20))">
+    <meta name="keywords" content="@Model.Tags">
+    <meta property="og:description" content="@Html.Raw(@StringHelper.FormatTitle(Model.Content, 50))w">
+    <meta property="og:url" content="https://spookvooper.com/Forum/ViewPost/@Model.PostID">
+</head>
+
+<div class="container vw-100">
+
+    @await Html.PartialAsync("_StatusMessage", TempData["StatusMessage"])
+
+    <div class="row">
+        <div class="col-12">
+            <div class="forum-card">
+                <div class="row">
+                    <div class="col">
+                        @{ User poster = await userManager.FindByIdAsync(Model.Author); }
+
+                        <h1>@Html.Raw(Markdown.Parse(Model.Title, sanitizeHtml: true))</h1>
+                        <a asp-controller="Forum" asp-action="Index" asp-route-id="@Model.Category">in @Model.Category</a>
+
+                        <div class="d-flex justify-content-start" style="margin-top:20px">
+                            <img class="smallpfp" style="margin-right:10px; margin-left:0" src="@poster.GetPfpUrl()" />
+                            <a asp-controller="User" asp-action="Info" asp-route-id="@poster.UserName" style="font-size:larger">
+                                @poster.UserName
+                            </a>
+                        </div>
+                    </div>
+                    <div class="col">
+                        @{
+                            User user = await userManager.GetUserAsync(User);
+
+                            if (user == null)
+                            {
+                            <button class="likebutton" id="LikeButton" style="float:right">
+                                <h3 id="LikeCount">@Model.GetLikes(context)</h3><h1 id="LikeOff">🖤</h1>
+                            </button>
+                            }
+                            else
+                            {
+                                if (context.ForumLikes.Any(l => l.AddedBy == user.Id && l.Post == Model.PostID))
+                                {
+                            <button class="likebutton" id="LikeButton" style="float:right">
+                                <h3 id="LikeCount">@Model.GetLikes(context)</h3><h1 id="LikeOn">💙</h1>
+                            </button>
+                                }
+                                else
+                                {
+                            <button class="likebutton" id="LikeButton" style="float:right">
+                                <h3 id="LikeCount">@Model.GetLikes(context)</h3><h1 id="LikeOff">🖤</h1>
+                            </button>
+                                }
+                            }
+                        }
+                    </div>
+                </div>
+                <hr />
+                <br />
+
+                @if (!Model.Removed)
+                {
+                    if (!Model.Picture)
+                    {
+                <p>@Html.Raw(Markdown.Parse(Model.Content, sanitizeHtml: true))</p>
+                    }
+                    else
+                    {
+                <img src="@Model.Content" style="max-width:95%; max-height:95%; text-align:center; border-radius:10px" />
+                    }
+                }
+                else
+                {
+                <p style="color:red">[Removed]</p>
+                }
+
+                <br />
+                <br />
+                <br />
+
+                <a class="btn btn-primary" data-toggle="collapse" href="#raw" role="button" aria-expanded="false" aria-controls="collapseExample">
+                    Raw Post
+                </a>
+
+                <div class="collapse" id="raw">
+                    @StringHelper.FormatHTML(Model.Content)
+                </div>
+
+                <a class="btn btn-primary" data-toggle="collapse" href="#addcomment" role="button" aria-expanded="false" aria-controls="collapseExample">
+                    Comment
+                </a>
+                @{
+                    if (Model.Author == user?.Id)
+                    {
+                        <a class="btn btn-outline-warning" asp-controller="Forum" asp-action="EditPost" asp-route-id="@Model.PostID">Edit</a>
+                    }
+                    if (Model.Author == user?.Id || ((User != null) && (User.IsInRole("Admin") || User.IsInRole("Moderator"))))
+                    {
+                        <a class="btn btn-outline-danger" asp-controller="Forum" asp-action="RemovePost" asp-route-id="@Model.PostID">Delete</a>
+                    }
+
+                }
+
+                <div class="collapse" id="addcomment">
+                    <div class="form-group">
+                        <br />
+                        <textarea rows="6" class="form-control" id="CommentInput" maxlength="1000"></textarea>
+                        <span asp-validation-for="Content" class="text-danger"></span>
+                        <br />
+                        <button type="button" class="btn btn-primary" id="CommentSubmit">Submit</button>
+                        <span class="text-warning" style="margin-left:10px" id="CommentMessage"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Comment Section -->
+    <!-- Jesus christ making a forum is tiring -->
+
+    <div id="CommentRoot">
+        @{
+            IEnumerable<ForumComment> rootcomments = context.ForumComments.AsQueryable().Where(c => c.PostOnID == Model.PostID && c.CommentOnID == null).AsEnumerable().OrderByDescending(c => c.GetWeight(context)).ToList();
+
+            foreach (ForumComment comment in rootcomments)
+            {
+            @await Component.InvokeAsync("Comment", new CommentViewModel() { comment = comment, webUser = user });
+            }
+        }
+    </div>
+
+</div>
+
+@section Scripts  {
+    @await Html.PartialAsync("_ValidationScriptsPartial")
+
+    <script>
+        document.getElementById("LikeButton").onclick = Like;
+        document.getElementById("CommentSubmit").onclick = SubmitComment;
+
+        var commentMessage = document.getElementById("CommentMessage");
+
+        var likeon = document.getElementById("LikeOn");
+        var likeoff = document.getElementById("LikeOff");
+
+        var liked = (likeon != null);
+
+        var icon = null;
+
+        if (liked) {
+            icon = likeon;
+        }
+        else {
+            icon = likeoff;
+        }
+
+        var likeCount = document.getElementById("LikeCount");
+
+        var lock = false;
+
+        function Like() {
+
+            if (!liked) {
+
+                icon.innerHTML = "💙";
+                likeCount.innerHTML = parseInt(likeCount.innerHTML) + 1;
+                liked = true;
+
+                $.ajax({
+                    url: '@Url.Action("AddLike", "Forum", new { id = Model.PostID })',
+                    method: 'POST',
+                    beforeSend: function (xhr) {
+                        xhr.setRequestHeader("RequestVerificationToken",
+                        $('input:hidden[name="__RequestVerificationToken"]').val());
+                    },
+                    success: function (data) {
+
+                    },
+                    error: function(xhr, error){
+                        icon.innerHTML = "Log in!";
+                    }
+
+                });
+            }
+            else {
+
+                icon.innerHTML = "🖤";
+                likeCount.innerHTML = parseInt(likeCount.innerHTML) - 1;
+                liked = false;
+
+                $.ajax({
+                    url: '@Url.Action("RemoveLike", "Forum", new { id = Model.PostID })',
+                    method: 'POST',
+                    beforeSend: function (xhr) {
+                        xhr.setRequestHeader("RequestVerificationToken",
+                        $('input:hidden[name="__RequestVerificationToken"]').val());
+                    },
+                    success: function (data) {
+
+                    }
+                });
+            }
+        }
+
+        function SubmitComment() {
+
+            if (lock) {
+                commentMessage.innerHTML = "Please wait.";
+                return;
+            }
+
+            if ($("#CommentInput").val() == "") {
+                commentMessage.innerHTML = "Please enter a comment";
+                return;
+            }
+
+            lock = true;
+
+            $.ajax({
+                url: '/Forum/AddComment',
+                method: 'POST',
+                data: { postid: @Model.PostID, root: true, content: $("#CommentInput").val() },
+
+                beforeSend: function (xhr) {
+                    xhr.setRequestHeader("RequestVerificationToken",
+                    $('input:hidden[name="__RequestVerificationToken"]').val());
+                },
+                success: function (data) {
+                    commentMessage.innerHTML = data;
+                    window.location.reload(true);
+                },
+                error: function(xhr, error){
+
+                }
+
+            });
+
+        }
+
+        function EditComment(commentid) {
+
+            var editMessage = document.getElementById("EditMessage-" + commentid);
+
+            if ($("#EditInput-" + commentid).val() == "") {
+                editMessage.innerHTML = "Please enter a comment";
+                return;
+            }
+
+            if (lock) {
+                editMessage.innerHTML = "Please wait.";
+                return;
+            }
+
+            lock = true;
+
+            $.ajax({
+                url: '/Forum/EditComment',
+                method: 'POST',
+                data: { commentid: commentid, content: $("#EditInput-" + commentid).val() },
+
+                beforeSend: function (xhr) {
+                    xhr.setRequestHeader("RequestVerificationToken",
+                    $('input:hidden[name="__RequestVerificationToken"]').val());
+                },
+                success: function (data) {
+                    editMessage.innerHTML = data;
+                    window.location.reload(true);
+                },
+                error: function(xhr, error){
+
+                }
+
+            });
+
+        }
+
+        function DeleteComment(commentid) {
+
+            lock = true;
+
+            if (lock) {
+                return;
+            }
+
+            $.ajax({
+                url: '/Forum/RemoveComment',
+                method: 'POST',
+                data: { commentid: commentid },
+
+                beforeSend: function (xhr) {
+                    xhr.setRequestHeader("RequestVerificationToken",
+                    $('input:hidden[name="__RequestVerificationToken"]').val());
+                },
+                success: function (data) {
+                    window.location.reload(true);
+                },
+                error: function(xhr, error){
+
+                }
+
+            });
+
+        }
+
+        function SubmitReply(commentid) {
+
+            var replyMessage = document.getElementById("ReplyMessage-" + commentid);
+
+            if ($("#ReplyInput-" + commentid).val() == "") {
+                replyMessage.innerHTML = "Please enter a comment";
+                return;
+            }
+
+            if (lock) {
+                replyMessage.innerHTML = "Please wait.";
+                return;
+            }
+
+            lock = true;
+
+            $.ajax({
+                url: '/Forum/AddComment',
+                method: 'POST',
+                data: { postid: @Model.PostID, root: false, content: $("#ReplyInput-" + commentid).val(), commentid: commentid },
+
+                beforeSend: function (xhr) {
+                    xhr.setRequestHeader("RequestVerificationToken",
+                    $('input:hidden[name="__RequestVerificationToken"]').val());
+                },
+                success: function (data) {
+                    replyMessage.innerHTML = data;
+                    window.location.reload(true);
+                },
+                error: function(xhr, error){
+
+                }
+
+            });
+
+        }
+
+        function LikeComment(commentid) {
+
+            var icon = document.getElementById("CommentLikeIcon-" + commentid);
+            var count = document.getElementById("CommentLikeCount-" + commentid);
+
+            if (icon.innerHTML == "🖤") {
+
+                icon.innerHTML = "💙";
+                count.innerHTML = parseInt(count.innerHTML) + 1;
+
+                $.ajax({
+                    url: '/Forum/AddCommentLike',
+                    method: 'POST',
+                    beforeSend: function (xhr) {
+                        xhr.setRequestHeader("RequestVerificationToken",
+                        $('input:hidden[name="__RequestVerificationToken"]').val());
+                    },
+                    data: { id: commentid },
+                    success: function (data) {
+
+                    },
+                    error: function(xhr, error){
+
+                    }
+
+                });
+            }
+            else {
+
+                icon.innerHTML = "🖤";
+                count.innerHTML = parseInt(count.innerHTML) - 1;
+
+                $.ajax({
+                    url: '/Forum/RemoveCommentLike',
+                    method: 'POST',
+                    beforeSend: function (xhr) {
+                        xhr.setRequestHeader("RequestVerificationToken",
+                        $('input:hidden[name="__RequestVerificationToken"]').val());
+                    },
+                    data: { id: commentid },
+                    success: function (data) {
+
+                    },
+                    error: function(xhr, error){
+
+                    }
+
+                });
+            }
+        }
+
+
+    </script>
+}
+
+

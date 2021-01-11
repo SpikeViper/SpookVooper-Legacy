@@ -1,0 +1,95 @@
+﻿@model Election
+@inject UserManager<User> userManager
+@inject VooperContext context
+
+@{
+    string title = "Could not find district!";
+
+    if (Model != null)
+    {
+        title = Model.District + Model.Type + "Election";
+        ViewData["Title"] = title;
+    }
+
+    District district = await context.Districts.AsQueryable().FirstOrDefaultAsync(x => x.Name == Model.District);
+}
+
+<head>
+    <meta property="og:title" content="@title">
+    <meta name="keywords" content="SpookVooper, Vooperia, Districts, Government, Elections">
+    <meta property="og:description" content="A Vooperian Election">
+    <meta property="og:url" content="https://spookvooper.com/Government/ViewElection?id=@Model.Id">
+</head>
+
+<!-- Main row for page -->
+<div class="d-flex flex-row align-content-center" style="width:100%">
+    <!-- Leftmost column -->
+    <div class="p-2 flex-shrink-1 ml-auto"></div>
+
+    <!-- Center column -->
+    <div class="p-4" style="width:80em">
+
+        @await Html.PartialAsync("_StatusMessage", TempData["StatusMessage"])
+
+        @if (Model != null)
+        {
+            var user = await userManager.GetUserAsync(User);
+
+            <div class="d-flex align-content-center align-items-center">
+
+                <div class="ml-auto" style="display: inline-block; vertical-align:central; height:100%">
+                    <img src="@district.Flag_Url" style="width:5em; vertical-align:middle" />
+                </div>
+
+                <div style="display:inline-block; margin:2em;">
+                    <h2 style="text-align:center" class="display-4">The @Model.District @Model.Type Election</h2>
+                </div>
+
+                <div class="mr-auto" style="display: inline-block; vertical-align:central; height:100%">
+                    <img src="@district.Flag_Url" style="width:5em; vertical-align:middle" />
+                </div>
+
+            </div>
+
+            <br />
+
+            <h2 class="text-center">Select a Candidate</h2>
+
+            <br />
+
+            <div class="text-center">
+
+                @{
+                    List<(User user, int votes)> candidates = new List<(User, int)>();
+
+                    foreach (User cand in context.Users.AsQueryable().Where(x => x.district == Model.District))
+                    {
+                        if (await cand.IsEligibleForElection(Model.Type, Model.District))
+                        {
+                            int votes = await context.ElectionVotes.AsQueryable().CountAsync(x => x.Choice_Id == cand.Id);
+
+                            candidates.Add((cand, votes));
+                        }
+                    }
+
+                    foreach (var candidate in candidates.OrderByDescending(x => x.votes))
+                    {
+                        <div class="stock-square" style="display:inline-block; vertical-align:top; position:relative">
+                            <div>
+                                <h5 style="word-break:break-all">@candidate.user.Name</h5>
+                                <img class="govpfp" style="width:90%;" src="@candidate.user.Image_Url" />
+                            </div>
+                            <a class="btn btn-outline-primary text-center" style="position:absolute; bottom:5px; left:5px; right:auto" asp-controller="Government" asp-action="ProcessVote" asp-route-id="@Model.Id" asp-route-choice="@candidate.user.Id">Vote</a>
+                        </div>
+                    }
+                }
+            </div>
+
+        }
+    </div>
+
+    <!-- Rightmost column -->
+    <div class="p-4 flex-shrink-1 mr-auto"></div>
+</div>
+
+

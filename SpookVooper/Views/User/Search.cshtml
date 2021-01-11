@@ -1,0 +1,62 @@
+﻿@model UserSearchModel
+@{
+    ViewData["Title"] = "Users Search";
+}
+
+<div class="container vw-100">
+    <div class="col-12">
+        <h1 style="text-align:left" class="display-4">User Search</h1>
+
+        <form method="post">
+            <div>
+                <div asp-validation-summary="All" class="text-danger"></div>
+                <div class="form-group">
+                    <input asp-for="search" class="form-control" />
+                </div>
+                <button type="submit" class="btn btn-primary">Search</button>
+            </div>
+        </form>
+
+        <br />
+
+        @{
+            if (!String.IsNullOrWhiteSpace(Model.search))
+            {
+                List<User> users = Model.userManager.Users.AsEnumerable().Where(u => !u.UserName.Contains('@') && u.UserName.ToLower().Contains(Model.search.ToLower())).OrderByDescending(u => u.UserName.ToLower().StartsWith(Model.search.ToLower())).ToList();
+
+                if (users != null && users.Count > 0)
+                {
+                    <table id="userTable">
+                        @foreach (User user in users)
+                        {
+                            <tr>
+
+                                <td>
+                                    <a asp-controller="User" asp-action="Info" asp-route-svid="@user.Id">
+                                            <img class="smallpfp" style="margin-right: 10px" src="@user.GetPfpUrl()" />
+                                    </a>
+                                </td>
+                                <td style="font-size:30px;">
+                                    <a asp-controller="User" asp-action="Info" asp-route-svid="@user.Id">
+                                        @user.UserName
+                                    </a>
+                                </td>
+
+                            </tr>
+                        }
+                    </table>
+                }
+                else
+                {
+                    <h1 style="text-align:left">No users found!</h1>
+                }
+            }
+
+
+        }
+
+        @section Scripts {
+            @await Html.PartialAsync("_ValidationScriptsPartial")
+        }
+    </div>
+</div>

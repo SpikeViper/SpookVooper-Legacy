@@ -1,0 +1,83 @@
+﻿@model IssueStockModel
+@inject UserManager<User> userManager
+
+
+@{
+    /*
+    ViewData["Title"] = "Issue Stock";
+
+    User user = await userManager.GetUserAsync(User);
+    Group group = context.Groups.FirstOrDefault(g => g.Group_Category == GroupTypes.Company && g.Id == Model.GroupID);
+    Stock stock = scontext.Stocks.FirstOrDefault(s => s.GroupID == group.Id);
+
+    int maxStock = ((int)Math.Floor(group.Credits));
+    int currentStock = stock.Total;
+    int maxIssue = maxStock - currentStock;
+    */
+}
+
+@{
+/*
+    if (group.HasPermission(user, "eco", context))
+    {
+        <div class="container vw-100">
+            <div class="col-12">
+                @await Html.PartialAsync("_StatusMessage", TempData["StatusMessage"])
+                <h4>Issue Stock</h4>
+
+                <p>Issuing stock increases stock in the market but will decrease the value of each stock. If bought, these new stocks will still raise your company value.</p>
+                <p>
+                    Stock value is simply the company value divided by number of stock. For example, if a company worth ¢1000 with 100 stock has a stock price of $10,
+                    when they issue 100 more stock the price will drop to ¢5. However, when those issues stocks are bought, the stock price will reach $10 again and the
+                    company will be worth $2000 - doubled!
+                </p>
+                <br />
+                <hr />
+
+                <p>Your company value: <b>¢@group.Credits</b></p>
+                <p>Your maximum Stock: <b>@maxStock</b></p>
+                <p>Your current Stock: <b>@currentStock</b></p>
+                <p>You can issue: <b>@maxIssue</b></p>
+            </div>
+
+            <form method="post">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div asp-validation-summary="All" class="text-danger"></div>
+                        @Html.HiddenFor(x => x.GroupID)
+                        <div class="form-group">
+                            <label asp-for="Amount"></label>
+                            <span asp-description-for="Amount" class="form-text" style="color:#888888" />
+                            <input asp-for="Amount" class="form-control" min="1" max="@maxIssue" />
+                            <span asp-validation-for="Amount" class="text-danger"></span>
+                        </div>
+                        <div class="form-group">
+                            <label asp-for="Purchase"></label>
+                            <span asp-description-for="Purchase" class="form-text" style="color:#888888" />
+                            <input asp-for="Purchase" class="form-control" min="0" max="@maxIssue" />
+                            <span asp-validation-for="Purchase" class="text-danger"></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="container" style="align-content:flex-start">
+                        <div class="d-flex">
+                            <div class="flex-column" style="margin-right:5px; margin-left: -15px">
+                                <button type="submit" class="btn btn-outline-warning">Issue Stock</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+            @section Scripts {
+                @await Html.PartialAsync("_ValidationScriptsPartial")
+            }
+        </div>
+
+    }
+    else
+    {
+        <h4>You don't have permission to do this!</h4>
+    }
+*/
+}

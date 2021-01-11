@@ -1,0 +1,140 @@
+﻿@model CommentViewModel
+@inject VooperContext context
+@inject UserManager<User> userManager
+@using SpookVooper.Web.Extensions
+
+<div class="row">
+    <div class="col-12">
+
+        @{
+            Random ra = new Random();
+            int r = ra.Next(0, 256);
+            int g = ra.Next(0, 256);
+            int b = ra.Next(0, 256);
+        }
+
+        <div class="comment-card" style="background-color:rgba(@r, @g, @b, 0.05)">
+
+            @if (Model != null && Model.comment != null)
+            {
+
+                User commentUser = Model.comment.GetUser(context);
+
+                <div class="d-flex justify-content-start">
+
+                    <div class="p-0 flex-grow-1">
+
+                        <div class="d-flex">
+                            <div class="p-1">
+                                <img class="smallpfp" style="margin-left: 10px; margin-right:10px; float:right" src="@commentUser.GetPfpUrl()" />
+                            </div>
+                            <div class="p-1">
+                                <a asp-controller="User" asp-action="Info" asp-route-svid="@commentUser.Id">
+                                    @commentUser.UserName
+                                </a>
+                                @if (!Model.comment.Removed)
+                                {
+                                    <p>@Html.Raw(Markdown.Parse(Model.comment.Content, sanitizeHtml: true))</p>
+                                }
+                                else
+                                {
+                                    <p style="color:red">[Removed]</p>
+                                }
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <div class="p-0">
+                        @{
+                            if (Model.webUser == null)
+                            {
+                                <div class="text-center">
+                                    <h4 style="text-align:center; cursor:pointer; margin-bottom:0px; min-width:50px;" onclick="LikeComment(@Model.comment.CommentID);" id="CommentLikeIcon-@Model.comment.CommentID">🖤</h4>
+                                    <p style="text-align:center; min-width:50px;" id="CommentLikeCount-@Model.comment.CommentID">@Model.comment.GetLikes(context)</p>
+                                </div>
+                            }
+                            else
+                            {
+                                if (context.ForumCommentLikes.Any(l => l.UserID == Model.webUser.Id && l.CommentID == Model.comment.CommentID))
+                                {
+                                    <div class="text-center" style="width:50px">
+                                        <h4 style="text-align:center; cursor:pointer; margin-bottom:0px; min-width:50px;" onclick="LikeComment(@Model.comment.CommentID);" id="CommentLikeIcon-@Model.comment.CommentID">💙</h4>
+                                        <p style="text-align:center; min-width:50px;" id="CommentLikeCount-@Model.comment.CommentID">@Model.comment.GetLikes(context)</p>
+                                    </div>
+
+                                }
+                                else
+                                {
+
+                                    <div class="text-center">
+                                        <h4 style="text-align:center; cursor:pointer; margin-bottom:0px; min-width:50px;" onclick="LikeComment(@Model.comment.CommentID);" id="CommentLikeIcon-@Model.comment.CommentID">🖤</h4>
+                                        <p style="text-align:center; min-width:50px;" id="CommentLikeCount-@Model.comment.CommentID">@Model.comment.GetLikes(context)</p>
+                                    </div>
+                                }
+                            }
+                        }
+                    </div>
+                </div>
+
+                <hr />
+
+                <div class="d-flex">
+                    <div class="p-0 flex-grow-1">
+                        @{ TimeSpan timePassed = DateTime.UtcNow.Subtract(Model.comment.TimePosted); }
+                        <p style="opacity:0.8; font-size:smaller; padding-left:10px">  Posted @timePassed.ToReadableString().Split(',')[0] Ago</p>
+                    </div>
+                    <div class="p-0">
+
+                        @if ((Model.webUser != null && Model.webUser.Id == commentUser.Id) || ((User != null) && (User.IsInRole("Admin") || User.IsInRole("Moderator"))))
+                        {
+                            <a class="btn btn-outline-danger float-right p-1 m-1" data-toggle="collapse" style="cursor:pointer" onclick="DeleteComment(@Model.comment.CommentID)" role="button" aria-expanded="false" aria-controls="collapseExample">
+                                Delete
+                            </a>
+                        }
+                        @if (Model.webUser != null && Model.webUser.Id == commentUser.Id)
+                        {
+                            <a class="btn btn-outline-warning float-right p-1 m-1" data-toggle="collapse" href="#EditComment-@Model.comment.CommentID" role="button" aria-expanded="false" aria-controls="collapseExample">
+                                Edit
+                            </a>
+                        }
+                        <a class="btn btn-outline-primary float-right p-1 m-1" data-toggle="collapse" href="#addreply-@Model.comment.CommentID" role="button" aria-expanded="false" aria-controls="collapseExample">
+                            Reply
+                        </a>
+                    </div>
+                </div>
+
+                <div class="collapse" id="addreply-@Model.comment.CommentID">
+                    <div class="form-group">
+                        <br />
+                        <textarea rows="6" class="form-control" id="ReplyInput-@Model.comment.CommentID" maxlength="1000"></textarea>
+                        <br />
+                        <button type="button" class="btn btn-primary" id="ReplySubmit-@Model.comment.CommentID" onclick="SubmitReply(@Model.comment.CommentID)">Submit</button>
+                        <span class="text-warning" style="margin-left:10px" id="ReplyMessage-@Model.comment.CommentID"></span>
+                    </div>
+                </div>
+
+                <div class="collapse" id="EditComment-@Model.comment.CommentID">
+                    <div class="form-group">
+                        <br />
+                        <textarea rows="6" class="form-control" id="EditInput-@Model.comment.CommentID" maxlength="1000">@Model.comment.Content</textarea>
+                        <br />
+                        <button type="button" class="btn btn-warning" id="EditSubmit-@Model.comment.CommentID" onclick="EditComment(@Model.comment.CommentID)">Edit</button>
+                        <span class="text-warning" style="margin-left:10px" id="EditMessage-@Model.comment.CommentID"></span>
+                    </div>
+                </div>
+
+
+                IEnumerable<ForumComment> children = context.ForumComments.AsQueryable().Where(c => c.CommentOnID == Model.comment.CommentID).AsEnumerable().OrderByDescending(c => c.GetWeight(context)).ToList();
+
+                foreach (ForumComment child in children)
+                {
+                    @await Component.InvokeAsync("Comment", new CommentViewModel { comment = child, webUser = Model.webUser });
+                }
+
+
+            }
+
+        </div>
+    </div>
+</div>

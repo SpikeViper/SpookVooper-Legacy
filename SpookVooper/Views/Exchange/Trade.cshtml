@@ -1,0 +1,345 @@
+﻿@model SpookVooper.Web.Models.ExchangeViewModels.ExchangeTradeModel
+@inject UserManager<User> userManager
+@inject VooperContext context
+@using System.Text
+
+@{
+    ViewData["Title"] = $"SVSE Trading: {Model.Stock.Ticker}";
+    User webUser = await userManager.GetUserAsync(User);
+    Entity user = null;
+
+    if (webUser != null)
+    {
+
+        if (Model.Chosen_Account != null)
+        {
+            bool authorized = false;
+
+            if (Model.Chosen_Account is User)
+            {
+
+                if (webUser.Id == Model.Chosen_Account.Id)
+                {
+                    authorized = true;
+                }
+            }
+            else
+            {
+                Group accountGroup = await context.Groups.FindAsync(Model.Chosen_Account.Id);
+
+                if (await accountGroup.HasPermission(webUser, "eco"))
+                {
+                    authorized = true;
+                }
+            }
+
+            if (!authorized)
+            {
+                Model.Chosen_Account = webUser;
+            }
+        }
+
+        user = Model.Chosen_Account;
+    }
+
+    string account = "";
+    if (user != null) account = user.Id;
+
+    int amountOwned = 0;
+
+    StockObject owned = null;
+
+    if (webUser != null)
+    {
+        owned = context.StockObjects.FirstOrDefault(s => s.Owner_Id == user.Id && s.Ticker == Model.Stock.Ticker);
+    }
+
+    if (owned != null) amountOwned = owned.Amount;
+}
+
+<script>
+    var __cfRLUnblockHandlers = 1;
+    window.__cfRLUnblockHandlers = true;
+</script>
+
+<body style="background-color:#040d14">
+    <!-- Main row for page -->
+    <div class="trade-row" style="width:100%;">
+        <!-- Leftmost column -->
+        <div class="trade-side-col">
+            <!-- Order list -->
+            <div class="d-flex flex-column order-queue">
+                <div id="queueBox">
+                    <h4 style="margin:20px">Order Queue</h4>
+
+                    <div class="d-flex offer-box" style="font-size:1.2em">
+                        <p class="offer-text">Price</p>
+                        <p class="offer-text">Amount</p>
+                        <p class="offer-text">Total</p>
+                    </div>
+                    <br />
+
+                    <div id="sellBox">
+                        <div class="d-flex offer-box">
+                            <p id="queue-sell-price-0" class="offer-text money-red"></p>
+                            <p id="queue-sell-amount-0" class="offer-text"></p>
+                            <p id="queue-sell-total-0" class="offer-text"></p>
+                        </div>
+                        <div class="d-flex offer-box">
+                            <p id="queue-sell-price-1" class="offer-text money-red"></p>
+                            <p id="queue-sell-amount-1" class="offer-text"></p>
+                            <p id="queue-sell-total-1" class="offer-text"></p>
+                        </div>
+                        <div class="d-flex offer-box">
+                            <p id="queue-sell-price-2" class="offer-text money-red"></p>
+                            <p id="queue-sell-amount-2" class="offer-text"></p>
+                            <p id="queue-sell-total-2" class="offer-text"></p>
+                        </div>
+                        <div class="d-flex offer-box">
+                            <p id="queue-sell-price-3" class="offer-text money-red"></p>
+                            <p id="queue-sell-amount-3" class="offer-text"></p>
+                            <p id="queue-sell-total-3" class="offer-text"></p>
+                        </div>
+                        <div class="d-flex offer-box">
+                            <p id="queue-sell-price-4" class="offer-text money-red"></p>
+                            <p id="queue-sell-amount-4" class="offer-text"></p>
+                            <p id="queue-sell-total-4" class="offer-text"></p>
+                        </div>
+                        <div class="d-flex offer-box">
+                            <p id="queue-sell-price-5" class="offer-text money-red"></p>
+                            <p id="queue-sell-amount-5" class="offer-text"></p>
+                            <p id="queue-sell-total-5" class="offer-text"></p>
+                        </div>
+                        <div class="d-flex offer-box">
+                            <p id="queue-sell-price-6" class="offer-text money-red"></p>
+                            <p id="queue-sell-amount-6" class="offer-text"></p>
+                            <p id="queue-sell-total-6" class="offer-text"></p>
+                        </div>
+                        <div class="d-flex offer-box">
+                            <p id="queue-sell-price-7" class="offer-text money-red"></p>
+                            <p id="queue-sell-amount-7" class="offer-text"></p>
+                            <p id="queue-sell-total-7" class="offer-text"></p>
+                        </div>
+                        <div class="d-flex offer-box">
+                            <p id="queue-sell-price-8" class="offer-text money-red"></p>
+                            <p id="queue-sell-amount-8" class="offer-text"></p>
+                            <p id="queue-sell-total-8" class="offer-text"></p>
+                        </div>
+                        <div class="d-flex offer-box">
+                            <p id="queue-sell-price-9" class="offer-text money-red"></p>
+                            <p id="queue-sell-amount-9" class="offer-text"></p>
+                            <p id="queue-sell-total-9" class="offer-text"></p>
+                        </div>
+                    </div>
+
+                    <div class="d-flex offer-box m-0" style="font-size:1.1em;">
+                        <p id="price-left" class="offer-text" style="width:100px"></p>
+                        <b id="price-queue" class="offer-text">@Model.Stock.Current_Value.Round()</b>
+                        <div class="offer-text" style="display:inline-block">
+                            <p id="buy-total" class="offer-text money-green">¢0k</p>
+                            <p class="offer-text">/</p>
+                            <p id="sell-total" class="offer-text money-red">¢0k</p>
+                        </div>
+                    </div>
+
+                    <div id="buyBox">
+                        <div class="d-flex offer-box">
+                            <p id="queue-buy-price-0" class="offer-text money-green"></p>
+                            <p id="queue-buy-amount-0" class="offer-text"></p>
+                            <p id="queue-buy-total-0" class="offer-text"></p>
+                        </div>
+                        <div class="d-flex offer-box">
+                            <p id="queue-buy-price-1" class="offer-text money-green"></p>
+                            <p id="queue-buy-amount-1" class="offer-text"></p>
+                            <p id="queue-buy-total-1" class="offer-text"></p>
+                        </div>
+                        <div class="d-flex offer-box">
+                            <p id="queue-buy-price-2" class="offer-text money-green"></p>
+                            <p id="queue-buy-amount-2" class="offer-text"></p>
+                            <p id="queue-buy-total-2" class="offer-text"></p>
+                        </div>
+                        <div class="d-flex offer-box">
+                            <p id="queue-buy-price-3" class="offer-text money-green"></p>
+                            <p id="queue-buy-amount-3" class="offer-text"></p>
+                            <p id="queue-buy-total-3" class="offer-text"></p>
+                        </div>
+                        <div class="d-flex offer-box">
+                            <p id="queue-buy-price-4" class="offer-text money-green"></p>
+                            <p id="queue-buy-amount-4" class="offer-text"></p>
+                            <p id="queue-buy-total-4" class="offer-text"></p>
+                        </div>
+                        <div class="d-flex offer-box">
+                            <p id="queue-buy-price-5" class="offer-text money-green"></p>
+                            <p id="queue-buy-amount-5" class="offer-text"></p>
+                            <p id="queue-buy-total-5" class="offer-text"></p>
+                        </div>
+                        <div class="d-flex offer-box">
+                            <p id="queue-buy-price-6" class="offer-text money-green"></p>
+                            <p id="queue-buy-amount-6" class="offer-text"></p>
+                            <p id="queue-buy-total-6" class="offer-text"></p>
+                        </div>
+                        <div class="d-flex offer-box">
+                            <p id="queue-buy-price-7" class="offer-text money-green"></p>
+                            <p id="queue-buy-amount-7" class="offer-text"></p>
+                            <p id="queue-buy-total-7" class="offer-text"></p>
+                        </div>
+                        <div class="d-flex offer-box">
+                            <p id="queue-buy-price-8" class="offer-text money-green"></p>
+                            <p id="queue-buy-amount-8" class="offer-text"></p>
+                            <p id="queue-buy-total-8" class="offer-text"></p>
+                        </div>
+                        <div class="d-flex offer-box">
+                            <p id="queue-buy-price-9" class="offer-text money-green"></p>
+                            <p id="queue-buy-amount-9" class="offer-text"></p>
+                            <p id="queue-buy-total-9" class="offer-text"></p>
+                        </div>
+                    </div>
+
+                    @*@foreach (var offer in context.StockOffers.AsQueryable().OrderBy(s => s.Target).Where(s => s.Ticker == Model.Stock.Ticker && s.Order_Type == "BUY"))
+                {
+                    <div class="d-flex offer-box">
+                        <p class="offer-text money-green">¢@offer.Target</p>
+                        <p class="offer-text">@offer.Amount</p>
+                        <p class="offer-text">¢@((offer.Target * offer.Amount).Round())</p>
+                    </div>
+                }*@
+
+
+                </div>
+            </div>
+
+            <div style="margin: 20%">
+                <h2 id="totalStock">Total shares: </h2>
+                <h3 id="ownedPerc">You own: </h3>
+                <br />
+                <canvas id="ownership" height="200" width="200" style=""></canvas>
+            </div>
+        </div>
+        <!-- Center column -->
+        <div class="trade-center-col">
+            <div style="margin-bottom: 5em">
+                <h2 style="display:inline-block">Trade: @Model.Stock.Ticker</h2>
+                <h2 id="price-top" class="money-green" style="float: right"></h2>
+                <hr class="stock-square-hr" />
+            </div>
+            <canvas id="priceChart" style="text-align:center;"></canvas>
+            <div style="text-align:center">
+                <a href="#1xMINUTE" onclick="DoChart('1xMINUTE')">1m</a>
+                <p class="trade-bar">|</p>
+                <a href="#5xMINUTE" onclick="DoChart('5xMINUTE')">5m</a>
+                <p class="trade-bar">|</p>
+                <a href="#10xMINUTE" onclick="DoChart('15xMINUTE')">15m</a>
+                <p class="trade-bar">|</p>
+                <a href="#30xMINUTE" onclick="DoChart('30xMINUTE')">30m</a>
+                <p class="trade-bar">|</p>
+                <a href="#1xHOUR" onclick="DoChart('1xHOUR')">1h</a>
+                <p class="trade-bar">|</p>
+                <a href="#6xHOUR" onclick="DoChart('6xHOUR')">6h</a>
+                <p class="trade-bar">|</p>
+                <a href="#1xDAY" onclick="DoChart('1xDAY')">1d</a>
+                <p class="trade-bar">|</p>
+                <a href="#5xDAY" onclick="DoChart('5xDAY')">5d</a>
+                <p class="trade-bar">|</p>
+                <a href="#30xDAY" onclick="DoChart('30xDAY')">30d</a>
+            </div>
+
+            <canvas id="volumeChart" class="mt-5" style="text-align:center;" height="50"></canvas>
+        </div>
+        <!-- Rightmost column -->
+        <div class="trade-side-col">
+            <h4 id="owned-text">You own @amountOwned @Model.Stock.Ticker</h4>
+            @if (webUser != null)
+            {
+                <h4 id="balance-text">You have ¢@user.Credits.Round()</h4>
+            }
+            else
+            {
+                <h4 id="balance-text">Please log in!</h4>
+            }
+            <div class="btn-group mt-2" role="group" aria-label="Action" style="width:100%">
+                <button id="buy_button" type="button" class="btn btn-secondary buy-button" onclick="SetTradeState('BUY')">Buy</button>
+                <button id="sell_button" type="button" class="btn btn-secondary sell-button" onclick="SetTradeState('SELL')">Sell</button>
+            </div>
+            <div class="input-group mt-2">
+                <input id="amount-input" type="number" min="0" step="1" class="form-control" placeholder="Amount" aria-label="Amount" aria-describedby="center_at">
+                <div class="input-group-prepend">
+                    <span class="input-group-text trade-at" id="center_at">@@</span>
+                </div>
+                <input id="price-input" type="number" min="0" step="1" class="form-control" placeholder="Price" aria-label="Price" aria-describedby="center_at">
+            </div>
+            <div class="input-group mt-2">
+                <div class="input-group-prepend">
+                    <span class="input-group-text form-control trade-market" id="market_rate_text">Trade at Market Rate</span>
+                </div>
+                <div class="input-group-append">
+                    <div class="input-group-text form-control">
+                        <input id="market-check" type="checkbox" aria-label="Market rate checkbox" onclick="ToggleMarketRate()">
+                    </div>
+                </div>
+            </div>
+
+            <btn class="btn btn-outline-primary mt-5" style="cursor:pointer" onclick="SubmitTrade()">Submit Order</btn>
+
+            <div class="chat-box mt-5">
+                <div id="chat-view" class="chat-view">
+
+                </div>
+                <input id="chat-input" class="chat-input" />
+            </div>
+
+            <h4 class="mt-5">Your open orders:</h4>
+            <hr class="stock-square-hr" />
+
+            <div id="order-holder">
+            </div>
+        </div>
+    </div>
+</body>
+
+<script src="~/lib/jquery/dist/jquery.min.js"></script>
+<script src="~/js/Chart.bundle.min.js"></script>
+<script src="~/js/he.js"></script>
+<script src="~/js/stock-controller.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/3.1.3/signalr.min.js"></script>
+
+@{
+    if (webUser != null)
+    {
+        <script>
+            // DO NOT SHARE WHAT IS BELOW PLEASE //
+            // THIS CAN STEAL YOUR ACCOUNT!!!!!  //
+            SetUser('@account', '@webUser.Api_Key', @amountOwned);
+        </script>
+    }
+
+    if (Model != null && Model.Stock != null)
+    {
+        <script>
+            PrepSignalR();
+            ConnectSignalR();
+
+            var time = '1xMINUTE';
+
+            // Used for saving chart type in URL
+            if (window.location.hash) {
+                time = window.location.hash.substring(1);
+            }
+
+            UpdatePrice(@Model.Stock.Current_Value, @Model.Stock.Current_Value);
+            DoChart(time);
+            AddAllOrders();
+
+            function DoChart(time) {
+                // I really dislike javascript
+                BuildChart("@Model.Stock.Ticker", time);
+            }
+
+            BuildQueue();
+
+            BuildOwnership();
+
+            console.warn('DO NOT execute anything here unless you seriously know what you are doing! Your account could be stolen!');
+        </script>
+    }
+}
+

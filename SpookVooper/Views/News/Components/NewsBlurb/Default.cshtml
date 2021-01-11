@@ -1,0 +1,54 @@
+﻿@model NewsPost
+@inject VooperContext context
+@using  SpookVooper.Web.Extensions
+
+@{
+    User author = await context.Users.FindAsync(Model.AuthorID);
+    Group group = await context.Groups.FindAsync(Model.GroupID);
+
+    if (group == null)
+    {
+        group = new Group()
+        {
+            Image_Url = "/media/unity-256.png",
+            Name = "Unknown Group"
+        };
+    }
+}
+
+<!-- Main container for blurb -->
+    <div class="row newsblurb justify-content-between" style="width:60em">
+        <!-- Title section -->
+        <div class="newsblurbtitle">
+
+            <!-- Group image -->
+            <img class="newsblurbgroupimage" src="@group.Image_Url" />
+
+            <!-- Text portion -->
+            <div class="newstitletext">
+                <a asp-controller="News" asp-action="View" asp-route-postid="@Model.PostID"><h4>@Model.Title</h4></a>
+                <h6>
+                    by
+                    <a asp-controller="User" asp-action="Info" asp-route-svid="@Model.AuthorID">
+                        <i style="color:white">
+                            @author.UserName
+                        </i>
+                    </a>
+                    with
+                    <a asp-controller="Group" asp-action="View" asp-route-groupid="@Model.GroupID">
+                        <b style="color:white">
+                            @group.Name
+                        </b>
+                    </a>
+                </h6>
+                <br />
+            </div>
+        </div>
+        <div>
+            <img class="newsblurbimg" src="@Model.ImageURL" />
+            <br />
+        </div>
+
+        <span style="float:left">Posted @DateTime.Now.Subtract(Model.Timestamp).ToReadableString().Split(',')[0] ago</span>
+
+    </div>

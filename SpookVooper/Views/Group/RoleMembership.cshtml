@@ -1,0 +1,84 @@
+﻿@model GroupRole
+@inject VooperContext context
+@inject UserManager<User> userManager
+
+@{
+    ViewData["Title"] = "Role Members";
+}
+
+@{
+    User user = await userManager.GetUserAsync(User);
+
+    Group group = await context.Groups.FindAsync(Model.GroupId);
+}
+
+<div class="container vw-100">
+    <div class="col-12">
+
+        @await Html.PartialAsync("_StatusMessage", TempData["StatusMessage"])
+
+        @if (Model == null)
+        {
+            <h1>Role not found!</h1>
+        }
+        else
+        {
+            <h3 style="text-align:center">@ViewData["Title"]</h3>
+            <h2 style="text-align:center">Users in @Model.Name</h2>
+
+            var memberList = await group.GetUsers();
+            var inList = await Model.GetUsers();
+
+            <div class="row srow">
+                @foreach (User member in inList)
+                {
+                    <div class="col-6">
+                        <div class="p-1">
+                            <img class="smallpfp" style="margin-left: 10px; margin-right:10px; float:right" src="@member.GetPfpUrl()" />
+                        </div>
+                        <a asp-controller="User" asp-action="Info" asp-route-id="@member.UserName">
+                            <p class="forumtable-text">@member.UserName</p>
+                        </a>
+                    </div>
+                    <div class="col-6">
+                        @if (await group.HasPermission(user, "removerole"))
+                        {
+                            <a asp-action="ManageUser" asp-controller="Group" asp-route-groupid="@Model.GroupId" asp-route-userid="@member.Id" asp-route-operation="@($"removerole|{Model.RoleId}")" class="btn btn-outline-primary">Remove</a>
+                        }
+                    </div>
+                }
+            </div>
+
+            <br />
+
+            <h2 style="text-align:center">Other Group Members</h2>
+            <div class="row srow">
+                @foreach (User member in memberList)
+                {
+                    if (!inList.Contains(member))
+                    {
+
+                        <div class="col-6">
+                            <div class="p-1">
+                                <img class="smallpfp" style="margin-left: 10px; margin-right:10px; float:right" src="@member.GetPfpUrl()" />
+                            </div>
+                            <a asp-controller="User" asp-action="Info" asp-route-id="@member.UserName">
+                                <p class="forumtable-text">@member.UserName</p>
+                            </a>
+                        </div>
+                        <div class="col-6">
+                            @if (await group.HasPermission(user, "addrole"))
+                            {
+                                <a asp-action="ManageUser" asp-controller="Group" asp-route-groupid="@Model.GroupId" asp-route-userid="@member.Id" asp-route-operation="@($"addrole|{Model.RoleId}")" class="btn btn-outline-warning">Add</a>
+                            }
+                        </div>
+                    }
+                }
+            </div>
+        }
+    </div>
+
+    @section Scripts {
+        @await Html.PartialAsync("_ValidationScriptsPartial")
+    }
+</div>

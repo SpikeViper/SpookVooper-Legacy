@@ -1,0 +1,224 @@
+﻿@using Discord.WebSocket;
+@model SpookVooper.Web.Models.ForumViewModels.ForumIndexViewModel
+@inject VooperContext context
+@{
+    if (@String.IsNullOrEmpty(Model.Category))
+    {
+        ViewData["Title"] = "Forums";
+    }
+    else
+    {
+        ViewData["Title"] = @Model.Category;
+    }
+
+}
+
+<div class="container vw-100">
+    @await Html.PartialAsync("_StatusMessage", TempData["StatusMessage"])
+
+    @{
+        IEnumerable<ForumCategory> cats = context.ForumCategories.AsQueryable().Where(c => c.Parent == Model.Category);
+        List<ForumPost> posts = context.ForumPosts.AsQueryable().Where(c => c.Category == Model.Category && !c.Removed).AsEnumerable().OrderByDescending(p => p.GetWeight(context)).ToList();
+        IEnumerable<ForumPost> recentposts = null;
+
+        int start = Model.page * Model.amount;
+
+        <br />
+
+        if (Model.Category == "Root")
+        {
+            recentposts = context.ForumPosts.AsQueryable().Where(c => !c.Removed).AsEnumerable().OrderBy(c => DateTime.UtcNow.Subtract(c.TimePosted).TotalSeconds).Take(5);
+        }
+        else
+        {
+            ForumCategory thisCat = context.ForumCategories.FirstOrDefault(c => c.CategoryID == Model.Category);
+
+            if (thisCat != null && thisCat.Parent != null)
+            {
+            <a class="h1" style="font-size:larger; margin-bottom:20px" asp-controller="Forum" asp-action="Index" asp-route-id="@thisCat.Parent">
+                Back: @thisCat.Parent
+            </a>
+            }
+
+            recentposts = context.ForumPosts.AsQueryable().Where(c => !c.Removed && c.Category == @Model.Category).AsEnumerable().OrderBy(c => DateTime.UtcNow.Subtract(c.TimePosted).TotalSeconds).Take(5);
+        }
+
+        if (cats.Count() + posts.Count() == 0)
+        {
+            <h1 class="text-center">There's nothing here.</h1>
+            <h2 class="text-center">Maybe you should post something to fix that.</h2>
+        }
+        else
+        {
+
+            <div class="d-flex flex-wrap justify-content-center" style="margin-top:20px">
+                @foreach (ForumCategory cat in cats)
+                {
+                    <div class="d-flex flex-column flex-wrap forumlistcard flex-shrink-0 flex-grow-1 p-2">
+                        <div class="p-1">
+                            <a style="font-size:larger" asp-controller="Forum" asp-action="Index" asp-route-id="@cat.CategoryID">
+                                @cat.CategoryID
+                            </a>
+                        </div>
+                        <div class="p-1">
+                            @cat.Description
+                        </div>
+                        <div class="p-1" style="font-size:smaller">
+                            @cat.Tags
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <br />
+            <h2>Posts</h2>
+
+            User user = null;
+
+            if (User != null)
+            {
+                user = await Model.userManager.GetUserAsync(User);
+            }
+
+
+            for (int i = start; i < start + Model.amount; i++)
+            {
+                if (i > posts.Count() - 1)
+                {
+                    break;
+                }
+
+                ForumPost post = posts[i];
+
+                <div class="d-flex flex-wrap srow">
+                    <div class="p-2" style="font-size:larger">
+                        💙 @post.GetLikes(context)
+                    </div>
+                    <div class="p-2" style="width:40%">
+
+                        <a style="font-size:larger" asp-controller="Forum" asp-action="ViewPost" asp-route-id="@post.PostID">
+                            @Html.Raw(StringHelper.FormatTitle(post.Title, 20))
+                        </a>
+                    </div>
+
+                    <div class="p-0 flex-grow-1">
+                        <div class="d-flex">
+                            @{
+                                User authorUser = await Model.userManager.FindByIdAsync(post.Author);
+                                <div class="p-1">
+                                    <img class="smallpfp" style="margin-left: 10px; margin-right:10px; float:right" src="@authorUser.GetPfpUrl()" />
+                                </div>
+                                <a asp-controller="User" asp-action="Info" asp-route-id="@authorUser.UserName">
+                                    <p class="forumtable-text">@authorUser.UserName</p>
+                                </a>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="p-2" style="min-width:25%">
+                        <p style="word-break:break-all">
+                            @Html.Raw(StringHelper.FormatTitle(post.Content, 30))
+                        </p>
+                    </div>
+                    <!--
+                        <div class="col-3">
+                            <p style="font-size:smaller">
+                                @post.Tags
+                            </p>
+                        </div>
+                    -->
+
+                </div>
+
+
+
+
+
+            }
+
+                <br />
+
+            }
+
+            <div class="d-flex">
+                <div class="p-1 align-self-start flex-grow-1">
+                    <h1></h1>
+                </div>
+                @if (Model.page != 0)
+                {
+                    <div class="p-2 align-self-end">
+                        <a asp-action="Index" asp-controller="Forum" asp-route-id="@Model.Category" asp-route-page="@(Model.page - 1)" class="btn btn-primary" style="white-space:nowrap">Last</a>
+                    </div>
+                }
+                @if ((Model.page + 1) * Model.amount < posts.Count() - 1)
+                {
+                    <div class="p-2 align-self-end">
+                        <a asp-action="Index" asp-controller="Forum" asp-route-id="@Model.Category" asp-route-page="@(Model.page + 1)" class="btn btn-primary" style="white-space:nowrap">Next</a>
+                    </div>
+                }
+            </div>
+
+            <div class="d-flex">
+                <div class="p-2 flex-grow-1"></div>
+                <div class="p-2">
+                    <a class="btn btn-primary" asp-controller="Forum" asp-action="AddPost" asp-route-id="@Model.Category" asp-route-picpost="@false">Add Post</a>
+                </div>
+                <div class="p-2">
+                    <a class="btn btn-primary" asp-controller="Forum" asp-action="AddPost" asp-route-id="@Model.Category" asp-route-picpost="@true">Add Image</a>
+                </div>
+            </div>
+
+            <br />
+
+            <h2>Recent</h2>
+
+            foreach (ForumPost post in recentposts)
+            {
+                <div class="d-flex flex-wrap srow">
+                    <div class="p-2" style="font-size:larger">
+                        💙 @post.GetLikes(context)
+                    </div>
+                    <div class="p-2" style="width:40%">
+                        <div class="d-flex flex-column">
+                            <a style="font-size:larger" asp-controller="Forum" asp-action="ViewPost" asp-route-id="@post.PostID">
+                                @Html.Raw(StringHelper.FormatTitle(post.Title, 20))
+                            </a>
+                            <a asp-controller="Forum" asp-action="Index" asp-route-id="@post.Category">in @post.Category</a>
+                        </div>
+                    </div>
+
+                    <div class="p-0 flex-grow-1">
+                        <div class="d-flex">
+                            @{
+                                User authorUser = await Model.userManager.FindByIdAsync(post.Author);
+                                <div class="p-1">
+                                    <img class="smallpfp" style="margin-left: 10px; margin-right:10px; float:right" src="@authorUser.GetPfpUrl()" />
+                                </div>
+                                <a asp-controller="User" asp-action="Info" asp-route-id="@authorUser.UserName">
+                                    <p class="forumtable-text">@authorUser.UserName</p>
+                                </a>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="p-2" style="min-width:25%">
+                        <p style="word-break:break-all">
+                            @Html.Raw(StringHelper.FormatTitle(post.Content, 30))
+                        </p>
+                    </div>
+                    <!--
+                        <div class="col-3">
+                            <p style="font-size:smaller">
+                                @post.Tags
+                            </p>
+                        </div>
+                    -->
+
+                </div>
+
+
+
+        }
+
+    }
+            </div>

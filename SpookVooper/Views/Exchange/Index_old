@@ -1,0 +1,224 @@
+﻿@model ExchangeIndexModel
+@inject GroupContext context
+@inject UserContext ucontext
+@inject StockContext scontext
+@inject UserManager<User> umanager
+
+@{
+    ViewData["Title"] = "Exchange Home";
+
+    User current = await umanager.GetUserAsync(User);
+
+    List<string> owned = null;
+
+
+}
+
+@if (Model.Ready)
+{
+
+
+    @if (current != null)
+    {
+        owned = scontext.Stocks.AsQueryable().Where(s => s.PublicOwnership.Contains(current.Id)).Select(s => s.Ticker).Distinct().ToList();
+    }
+
+    <div class="container vw-100">
+        @await Html.PartialAsync("_StatusMessage", TempData["StatusMessage"])
+
+        @if (owned != null)
+        {
+            <h2>Owned</h2>
+
+            <div class="d-flex flex-wrap justify-content-start" style="margin-top:20px">
+
+                @foreach (string ticker in owned)
+                {
+                    
+                    Stock stock = scontext.Stocks.Find(ticker);
+                    int own = stock.GetOwnedAmount(current);
+                    decimal price = await stock.GetValue(context);
+
+                    <div class="forumlistcard">
+                        <div class="d-flex flex-wrap flex-row justify-content-between" style="min-width:250px; min-height:50px">
+                            <div class="p-2">
+                                <a asp-controller="Exchange" asp-action="Trade" asp-route-id="@ticker">
+                                    <h4>$@ticker</h4>
+                                </a>
+                            </div>
+                            <div class="p-2">
+                                <h4>-</h4>
+                            </div>
+                            <div class="p-2">
+                                <h4 style="color:lightblue">@own</h4>
+                            </div>
+                        </div>
+                        <div class="d-flex flex-wrap flex-row justify-content-between" style="min-width:250px; min-height:50px">
+                            <h4 class="p-2" style="color:lightgreen">(¢@Math.Round(own * price, 2))</h4>
+                            <h4 class="p-2" style="color:lightblue">@Math.Round(((double)own / stock.Total) * 100f, 2)%</h4>
+                        </div>
+
+                    </div>
+                }
+
+            </div>
+
+            <br />
+        }
+
+        <div class="d-flex flex-wrap flex-row justify-content-between" style="min-width:250px; min-height:50px">
+            <h2>All: Sorted by @Model.Sort</h2>
+            <div>
+                @if (Model.Page != 0)
+                {
+                    <a asp-action="Index" asp-controller="Exchange" asp-route-page="@(Model.Page - 1)" asp-route-sort="@Model.Sort" class="btn btn-outline-primary m-2">Last</a>
+                }
+                <a asp-action="Index" asp-controller="Exchange" asp-route-page="@(Model.Page + 1)" asp-route-sort="@Model.Sort" class="btn btn-outline-primary m-2">Next</a>
+            </div>
+        </div>
+
+        <div class="d-flex flex-wrap justify-content-start" style="margin-top:20px">
+
+            @foreach (StockPreview preview in Model.Previews)
+            {
+
+                float percent = 0f;
+
+                if (preview.OldPrice != -1.0m)
+                {
+                    decimal after = preview.Price;
+                    decimal before = preview.OldPrice;
+
+                    percent = (float)Math.Round((((after - before) / (before + 0.0000000001m)) * 100m), 2);
+                }
+
+                <div class="forumlistcard">
+                    <div class="d-flex flex-wrap flex-row justify-content-between" style="min-width:250px; min-height:50px">
+                        <div class="p-2">
+                            <a asp-controller="Exchange" asp-action="Trade" asp-route-id="@preview.Ticker">
+                                <h4>$@preview.Ticker</h4>
+                            </a>
+                        </div>
+                        <div class="p-2">
+                            <h4>-</h4>
+                        </div>
+                        <div class="p-2">
+                            @if (percent >= 0)
+                            {
+                                <h4 style="color:lightgreen">¢@Math.Round(preview.Price, 2)</h4>
+                            }
+                            else
+                            {
+                                <h4 style="color:lightcoral">¢@Math.Round(preview.Price, 2)</h4>
+                            }
+                        </div>
+                    </div>
+                    <div class="d-flex flex-wrap flex-row justify-content-end" style="min-width:250px; min-height:50px">
+
+                        @if (percent > 0)
+                        {
+                            <h5 class="p-2" style="color:lightgreen">(+@percent%)</h5>
+                        }
+                        else if (percent < 0)
+                        {
+                            <h5 class="p-2" style="color:lightcoral">(@percent%)</h5>
+                        }
+                        else if (preview.OldPrice == -1.0m)
+                        {
+                            <h5 class="p-2" style="color:white">New!</h5>
+                        }
+                        else
+                        {
+                            <h5 class="p-2" style="color:white">(0%)</h5>
+                        }
+
+                    </div>
+                </div>
+            }
+        </div>
+
+        <a asp-action="Index" asp-controller="Exchange" asp-route-page="@Model.Page" asp-route-sort="Name" class="btn btn-outline-primary m-2">Sort by Name</a>
+        <a asp-action="Index" asp-controller="Exchange" asp-route-page="@Model.Page" asp-route-sort="Company Value" class="btn btn-outline-primary m-2">Sort by Company Value</a>
+        <a asp-action="Index" asp-controller="Exchange" asp-route-page="@Model.Page" asp-route-sort="Price" class="btn btn-outline-primary m-2">Sort by Price</a>
+
+        <br />
+        <br />
+        <hr />
+        <br />
+
+        @{
+            float sum = 0f;
+
+            sum = (float)Math.Round(context.Groups.AsQueryable().Where(g => g.Name != "Vooperia").AsEnumerable().Sum(g => g.Credits), 2);
+
+            float perSum = 0f;
+
+            perSum = (float)Math.Round(ucontext.Users.AsEnumerable().Sum(u => u.Credits), 2);
+
+            float govSum = (float)Math.Round(context.Groups.FirstOrDefault(g => g.Name == "Vooperia").Credits, 2);
+        }
+
+        <h4 style="text-align:center">Companies hold </h4>
+        <h4 style="color:lightgreen;text-align:center">¢@sum</h4>
+        <br />
+        <h4 style="text-align:center">Citizens hold </h4>
+        <h4 style="color:lightgreen;text-align:center">¢@perSum</h4>
+        <br />
+        <h4 style="text-align:center">The Government holds </h4>
+        <h4 style="color:lightgreen;text-align:center">¢@govSum</h4>
+
+        <br />
+
+        <canvas id="pie" max-width="200px" max-height="200px" style="text-align:center"></canvas>
+
+    </div>
+
+    <script src="~/js/Chart.bundle.min.js"></script>
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+
+    <script>
+
+    Chart.defaults.global.defaultFontColor = "#fff";
+
+    data = {
+        datasets: [{
+            data: [@sum, @perSum, @govSum],
+            backgroundColor: [
+                '#1f9479',
+                '#34eb5b',
+                '#34c3eb'
+            ],
+            borderColor: [
+                '#444444',
+                '#444444',
+                '#444444'
+            ]
+        }],
+
+        // These labels appear in the legend and in the tooltips when hovering different arcs
+        labels: [
+            'Corporate',
+            'Personal',
+            'Government'
+        ],
+
+    };
+
+    options = {
+
+    }
+
+    var ctx = $('#pie');
+    var pie = new Chart(ctx, {
+        type: 'doughnut',
+        data: data,
+        options: options
+    });
+    </script>
+}
+else
+{
+    <div class="container vw-100">
+        <h1>Please wait, server loading!</h1>
+    </div>
+}

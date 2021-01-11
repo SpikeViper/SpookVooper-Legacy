@@ -1,0 +1,17 @@
+﻿@model ErrorViewModel
+@{
+    ViewData["Title"] = "Error";
+}
+
+<div class="container vw-100">
+    <h1 class="title">Whoops.</h1>
+
+    <h2>Something went wrong. You should probably bug Spike about this! Give him a detailed account of what you were doing to get to this page.</h2>
+
+    @if (Model.ShowRequestId)
+    {
+        <p>
+            <strong>Request ID:</strong> <code>@Model.RequestId</code>
+        </p>
+    }
+</div>

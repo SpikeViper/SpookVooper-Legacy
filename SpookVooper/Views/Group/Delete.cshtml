@@ -1,0 +1,32 @@
+﻿@model DeleteGroupModel
+@inject VooperContext context
+
+@{
+    ViewData["Title"] = "Delete Group";
+}
+
+<div class="container vw-100">
+    <div class="col-12">
+        <h4>@ViewData["Title"]</h4>
+        @await Html.PartialAsync("_StatusMessage", TempData["StatusMessage"])
+
+
+        <form method="post">
+
+            @{ 
+                Group group = await context.Groups.FindAsync(Model.groupid);
+                <h1>Delete: @group.Name</h1>
+            }
+
+            @Html.HiddenFor(x => x.groupid)
+
+            <h1>Are you sure?</h1>
+
+            <br />
+            <button type="submit" class="btn btn-outline-danger">Delete</button>
+        </form>
+    </div>
+    @section Scripts {
+        @await Html.PartialAsync("_ValidationScriptsPartial")
+    }
+</div>

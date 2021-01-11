@@ -1,0 +1,249 @@
+﻿@model SpookVooper.Web.Models.ExchangeViewModels.ExchangeIndexModel
+@inject UserManager<User> userManager
+@inject VooperContext context
+
+@{
+    ViewData["Title"] = "SVSE Stock Exchange";
+    User webUser = await userManager.GetUserAsync(User);
+    Entity user = null;
+
+    if (webUser != null)
+    {
+
+        if (Model.Chosen_Account != null)
+        {
+            bool authorized = false;
+
+            if (Model.Chosen_Account is User)
+            {
+
+                if (webUser.Id == Model.Chosen_Account.Id)
+                {
+                    authorized = true;
+                }
+            }
+            else
+            {
+                Group accountGroup = await context.Groups.FindAsync(Model.Chosen_Account.Id);
+
+                if (await accountGroup.HasPermission(webUser, "eco"))
+                {
+                    authorized = true;
+                }
+            }
+
+            if (!authorized)
+            {
+                Model.Chosen_Account = webUser;
+            }
+        }
+
+        user = Model.Chosen_Account;
+    }
+
+    string account = "";
+    if (user != null) account = user.Id;
+}
+
+
+<body style="background-color:#040d14">
+    <!-- Main row for page -->
+    <div class="d-flex flex-row align-content-center" style="width:100%;">
+        <!-- Leftmost column -->
+        <div class="p-4 flex-shrink-1 ml-auto"></div>
+        <!-- Center column -->
+        <div class="p-4" style="width:80em">
+
+            @if (user != null)
+            {
+                List<StockObject> ownedList = await context.StockObjects.AsQueryable().Where(s => s.Owner_Id == user.Id).ToListAsync();
+
+                decimal value = await user.GetPortfolioValue();
+                value = value.Round();
+
+                <div style="margin:2em">
+                    <!-- Logged in user information goes here -->
+                    <div style="margin-bottom:1em;display:inline-block">
+                        <h2>Welcome back, @user.Name</h2>
+                        <a asp-controller="Exchange" asp-action="SelectAccount" asp-route-account="@user.Id">Select an Account</a>
+                    </div>
+                    <div style="display:inline-block; float:right">
+                        <h3 class="money-green" style="text-align:right">¢@value</h3>
+
+                        @{
+                            decimal change = (value - user.GetYesterdayPortfolioValue());
+
+                            if (change == 0)
+                            {
+                                <p>+¢0 Today</p>
+                            }
+                            else if (change > 0)
+                            {
+                                <p class="money-green">+¢@change.Round() Today</p>
+                            }
+                            else
+                            {
+                                <p class="money-red">-¢@Math.Abs(change.Round()) Today</p>
+                            }
+                        }
+                    </div>
+                </div>
+
+                <!-- Owned stock carousel -->
+                <div id="owned_carousel" class="carousel slide" data-interval="false">
+                    <a class="carousel-control-prev w-auto" href="#owned_carousel" role="button" data-slide="prev">
+                        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                        <span class="sr-only">Previous</span>
+                    </a>
+                    <div class="carousel-inner" style="margin:auto; margin-bottom: 2em">
+
+                        <!-- Carousel items -->
+
+                        @{
+                            int count = ownedList.Count();
+                        }
+
+                        @for (int i = 0; i < (count / 5) + 1; i++)
+                        {
+
+                            string tag = "carousel-item active";
+
+                            if (i > 0)
+                            {
+                                tag = "carousel-item";
+                            }
+
+                            <div class="@tag">
+                                <div class="d-flex justify-content-center">
+                                    @for (int j = 0; j < 5; j++)
+                                    {
+                                        int index = (i * 5) + j;
+
+                                        if (index >= count) break;
+
+                                        StockObject stock = ownedList[index];
+                                        StockDefinition def = await context.StockDefinitions.FindAsync(stock.Ticker);
+                                        Group group = await context.Groups.FindAsync(def.Group_Id);
+
+                                        <a asp-controller="Exchange" asp-action="Trade" asp-route-ticker="@stock.Ticker" asp-route-account="@account">
+                                            <div class="d-flex align-items-start flex-column stock-owned-square">
+                                                <!-- Stock name info -->
+                                                <div class="stock-square-title">
+                                                    <h4>@stock.Ticker</h4>
+                                                    <p>@group.Name</p>
+                                                    <p>@stock.Amount@@¢@def.Current_Value.Round()</p>
+                                                </div>
+                                                <!-- Horizontal divider -->
+                                                <div class="owned-hr-holder">
+                                                    <hr class="stock-square-hr" />
+                                                </div>
+                                                <!-- Stock value info -->
+                                                <div>
+                                                    <h4 class="money-green">¢@((def.Current_Value * stock.Amount).Round())</h4>
+
+                                                    @{
+                                                        change = (def.Current_Value - def.GetYesterdayValue(context)) * stock.Amount;
+
+                                                        if (change == 0)
+                                                        {
+                                                            <p>+¢0</p>
+                                                        }
+                                                        else if (change > 0)
+                                                        {
+                                                            <p class="money-green">+¢@change.Round()</p>
+                                                        }
+                                                        else
+                                                        {
+                                                            <p class="money-red">-¢@Math.Abs(change.Round())</p>
+                                                        }
+                                                    }
+
+
+                                                </div>
+                                            </div>
+                                        </a>
+
+                                    }
+                                </div>
+                            </div>
+                        }
+                    </div>
+                    <a class="carousel-control-next w-auto" href="#owned_carousel" role="button" data-slide="next">
+                        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                        <span class="sr-only">Next</span>
+                    </a>
+                </div>
+
+                @if (count == 0)
+                {
+                    <h4 class="text-center">You own no stocks.</h4>
+                }
+                else if (count == 1)
+                {
+                    <h4 class="text-center">You own 1 stock.</h4>
+                }
+                else
+                {
+                    <h4 class="text-center">You own @count different stocks.</h4>
+                }
+            }
+
+            <!-- Search bar -->
+            <form class="form-group text-center" style="margin-top:5em; margin-bottom:5em">
+                <input class="stock-search form-control" type="text" placeholder="Find a stock..." />
+            </form>
+
+            <!-- List of all stocks -->
+            <div class="d-flex flex-wrap justify-content-center">
+                @foreach (StockDefinition definition in context.StockDefinitions.AsQueryable().Take(12))
+                {
+                    Group group = await context.Groups.FindAsync(definition.Group_Id);
+
+                    <a asp-controller="Exchange" asp-action="Trade" asp-route-ticker="@definition.Ticker" asp-route-account="@account">
+                        <div class="d-flex align-items-start flex-column stock-square">
+                            <!-- Stock name info -->
+                            <div class="stock-square-title">
+                                <h4>@definition.Ticker</h4>
+                                <p>@group.Name</p>
+                            </div>
+                            <!-- Horizontal divider -->
+                            <div class="hr-holder">
+                                <hr class="stock-square-hr" />
+                            </div>
+                            <!-- Stock value info -->
+                            <div>
+                                <h4 class="money-green">¢@definition.Current_Value.Round()</h4>
+                                @{
+                                    decimal change = definition.Current_Value - definition.GetYesterdayValue(context);
+
+                                    if (change == 0)
+                                    {
+                                        <p>+¢0</p>
+                                    }
+                                    else if (change > 0)
+                                    {
+                                        <p class="money-green">+¢@change.Round()</p>
+                                    }
+                                    else
+                                    {
+                                        <p class="money-red">-¢@Math.Abs(change.Round())</p>
+                                    }
+                                }
+                            </div>
+                        </div>
+                    </a>
+                }
+            </div>
+
+            <div class="text-center">
+                <p class="stock-sortby">Sort by:</p>
+                <a class="stock-sortby" href="">Price</a>
+                <p class="stock-sortby"> | </p>
+                <a class="stock-sortby" href="">Name</a>
+            </div>
+
+        </div>
+        <!-- Rightmost column -->
+        <div class="p-4 flex-shrink-1 mr-auto"></div>
+    </div>
+</body>

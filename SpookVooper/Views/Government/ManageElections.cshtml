@@ -1,0 +1,56 @@
+﻿@model IEnumerable<Election>
+@inject VooperContext context
+
+@{
+    ViewData["Title"] = "Senate Elections";
+}
+
+<head>
+    <meta property="og:title" content="Manage Vooperia Senate Elections">
+    <meta name="keywords" content="SpookVooper, Economy, News">
+    <meta property="og:description" content="The place to modify and plan elections">
+    <meta property="og:url" content="https://spookvooper.com/Government/ManageSenateElection">
+</head>
+
+
+<!-- Main row for page -->
+<div class="d-flex flex-row align-content-center" style="width:100%">
+    <!-- Leftmost column -->
+    <div class="p-4 flex-shrink-1 ml-auto"></div>
+    <!-- Center column -->
+    <div class="p-4" style="width:80em">
+        @await Html.PartialAsync("_StatusMessage", TempData["StatusMessage"])
+        <h1 class="display-2 text-center">Election Manager Controls</h1>
+
+        @if (Model == null || Model.Count() == 0)
+        {
+            <h2 class="text-center">There are no current elections.</h2>
+        }
+        else
+        {
+            foreach (Election election in Model)
+            {
+                <hr />
+                <h2 class="text-center">@election.District</h2>
+                <h2 class="text-center">Ends: @election.End_Date.ToLocalTime().ToShortDateString() @@ @election.End_Date.ToLocalTime().ToShortTimeString()</h2>
+                <div class="text-center">
+                    <a class="btn btn-outline-warning" asp-action="EndElection" asp-controller="Government" asp-route-id="@election.Id">Call Early</a>
+                    <a class="btn btn-outline-warning" asp-action="ViewVotes" asp-controller="Government" asp-route-id="@election.Id">View Votes</a>
+                </div>
+                <br />
+            }
+        }
+
+        <br />
+
+        <div class="text-center">
+            <a class="btn btn-outline-primary" asp-action="StartElection" asp-controller="Government">Start an Election</a>
+        </div>
+        <div class="text-center">
+            <a class="btn btn-outline-primary" style="margin-top:5px" asp-action="IssuePass" asp-controller="Government">Allow or Block Candidate</a>
+        </div>
+
+    </div>
+    <!-- Rightmost column -->
+    <div class="p-4 flex-shrink-1 mr-auto"></div>
+</div>

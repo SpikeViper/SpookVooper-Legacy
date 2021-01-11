@@ -1,0 +1,40 @@
+﻿@model GroupInviteModel
+@{
+    ViewData["Title"] = "Invite to Group";
+}
+
+<div class="container vw-100">
+    <div class="col-12">
+        <h4>@ViewData["Title"]</h4>
+        @await Html.PartialAsync("_StatusMessage", TempData["StatusMessage"])
+
+
+        <form method="post">
+            <div class="row">
+                <div class="col-md-6">
+                    <div asp-validation-summary="All" class="text-danger"></div>
+                    <div class="form-group">
+                        <label asp-for="InviteUser"></label>
+                        <input asp-for="InviteUser" class="form-control" />
+                        <span asp-validation-for="InviteUser" class="text-danger"></span>
+                    </div>
+                </div>
+            </div>
+
+            @Html.HiddenFor(x => x.Group)
+
+            <div class="form-group">
+                <div class="container" style="align-content:flex-start">
+                    <div class="d-flex">
+                        <div class="flex-column" style="margin-right:5px; margin-left: -15px">
+                            <button type="submit" class="btn btn-primary">Save</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+    @section Scripts {
+        @await Html.PartialAsync("_ValidationScriptsPartial")
+    }
+</div>

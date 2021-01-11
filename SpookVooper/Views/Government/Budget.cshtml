@@ -1,0 +1,88 @@
+﻿@inject VooperContext  context
+
+@{
+    ViewData["Title"] = "Government - Budget";
+}
+
+<head>
+    <meta property="og:title" content="SpookVooper: Budget Data">
+    <meta property="og:description" content="Tax and economic information.">
+    <meta property="og:url" content="https://spookvooper.com/Government/Budget">
+</head>
+
+@{ 
+    GovControls controls = await GovControls.GetCurrentAsync(context);
+}
+
+<div class="container vw-100">
+    <h1 class="display-4" style="text-align:center">Imperial Budget</h1>
+    <h2 style="text-align:center">Income and Expenditures</h2>
+
+    <br />
+    <h1>Tax Revenues</h1>
+
+    <table class="table" style="width:100%">
+        <tr>
+            <th></th>
+            <th>Payroll Tax</th>
+            <th>Sales Tax</th>
+            <th>Corporate Tax</th>
+            <th>Capital Gains Tax</th>
+            <th>Inactivity Tax</th>
+            <th>Direct Sales</th>
+
+        </tr>
+        <tr>
+            <th>Percent</th>
+            <td>@(controls.PayrollTaxRate.Round())%</td>
+            <td>@(controls.SalesTaxRate.Round())%</td>
+            <td>@(controls.CorporateTaxRate.Round())%</td>
+            <td>@(controls.CapitalGainsTaxRate.Round())%</td>
+            <td>@(controls.InactivityTaxRate.Round())%</td>
+            <td>N/A</td>
+        </tr>
+        <tr>
+            <th>Revenue</th>
+            <td>@controls.PayrollTaxRevenue.Round()</td>
+            <td>@controls.SalesTaxRevenue.Round()</td>
+            <td>@controls.CorporateTaxRevenue.Round()</td>
+            <td>@controls.CapitalGainsTaxRevenue.Round()</td>
+            <td>@controls.InactivityTaxRevenue.Round()</td>
+            <td>@controls.SalesRevenue.Round()</td>
+        </tr>
+    </table>
+
+    <h3>UBI:</h3>
+    <h4>Percent allocated: @controls.UBIBudgetPercent%</h4>
+    <h4>Allocated this hour: ¢@controls.UBIAccount</h4>
+
+    <br />
+
+    <br />
+
+    @{ DateTime now = DateTime.Now; }
+
+    <h1>Economic Activity</h1>
+    <hr />
+    <br />
+    <h3>Last minute:</h3>
+    <h3>¢@await context.Transactions.AsQueryable().Where(t => EF.Functions.DateDiffSecond(t.Time, now) < 60).SumAsync(t => t.Credits)</h3>
+    <hr />
+    <br />
+    <h3>Last hour:</h3>
+    <h3>¢@await context.Transactions.AsQueryable().Where(t => EF.Functions.DateDiffMinute(t.Time, now) < 60).SumAsync(t => t.Credits)</h3>
+    <hr />
+    <br />
+    <h3>Last day:</h3>
+    <h3>¢@await context.Transactions.AsQueryable().Where(t => EF.Functions.DateDiffHour(t.Time, now) < 24).SumAsync(t => t.Credits)</h3>
+    <hr />
+    <br />
+    <h3>Last week:</h3>
+    <h3>¢@await context.Transactions.AsQueryable().Where(t => EF.Functions.DateDiffDay(t.Time, now) < 7).SumAsync(t => t.Credits)</h3>
+    <hr />
+    <br />
+    <h3>Last month (30d):</h3>
+    <h3>¢@await context.Transactions.AsQueryable().Where(t => EF.Functions.DateDiffDay(t.Time, now) < 30).SumAsync(t => t.Credits)</h3>
+    <hr />
+    <br />
+</div>
