@@ -130,6 +130,8 @@ namespace SpookVooper.Web.Controllers
 
             string userInfoString = await userResponse.Content.ReadAsStringAsync();
 
+            Console.WriteLine(userInfoString);
+
             DiscordUserResponse userInfo = JsonConvert.DeserializeObject<DiscordUserResponse>(userInfoString);
 
             if (userInfo == null)

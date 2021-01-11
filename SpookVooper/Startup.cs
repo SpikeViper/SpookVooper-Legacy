@@ -187,6 +187,9 @@ namespace SpookVooper
 
             if (env.IsDevelopment())
             {
+                Console.WriteLine("///////////////////////////////////");
+                Console.WriteLine("Application is in DEVELOPMENT mode.");
+                Console.WriteLine("///////////////////////////////////");
                 app.UseDeveloperExceptionPage();
                 VoopAI.isDev = true;
             }
