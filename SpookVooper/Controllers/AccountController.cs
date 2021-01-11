@@ -115,6 +115,8 @@ namespace SpookVooper.Web.Controllers
 
             string tokenInfo = await response.Content.ReadAsStringAsync();
 
+            Console.WriteLine(tokenInfo);
+
             DiscordTokenResponse responseToken = JsonConvert.DeserializeObject<DiscordTokenResponse>(tokenInfo);
 
             if (responseToken == null)
