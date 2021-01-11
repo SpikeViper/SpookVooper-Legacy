@@ -733,13 +733,10 @@ namespace SpookVooper.VoopAIService
 
         public static async Task CmdXP(SocketMessage msg)
         {
-            if (msg.MentionedUsers.Count < 1)
-            {
-                await SendMessage((SocketTextChannel)msg.Channel, "Please specify a user!");
-                return;
-            }
-
-            SocketUser target = msg.MentionedUsers.First();
+            SocketUser target;
+            
+            if (msg.MentionedUsers.Count < 1) target = msg.Author;
+            else target = msg.MentionedUsers.First();
 
             using (VooperContext context = new VooperContext(VoopAI.DBOptions))
             {
