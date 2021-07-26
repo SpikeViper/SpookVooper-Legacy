@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Mvc.Filters;
 using System;
 using System.Security.Claims;
 using System.Linq;
-using SpookVooper.VoopAIService;
 using SpookVooper.Web.Controllers;
 using SpookVooper.Web.DB;
 using SpookVooper.Web.Entities;
@@ -45,7 +44,7 @@ namespace SpookVooper.Web.Helpers
 
             string userId = cl.Value;
 
-            using (VooperContext c = new VooperContext(VoopAI.DBOptions))
+            using (VooperContext c = new VooperContext(VooperContext.DBOptions))
             {
                 User user = c.Users.Find(userId);
 

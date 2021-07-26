@@ -2,15 +2,12 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using SpookVooper.Data.Services;
-using SpookVooper.VoopAIService;
 using SpookVooper.Web.Services;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Discord.WebSocket;
 using Microsoft.AspNetCore.Authorization;
 using SpookVooper.Web.Helpers;
-using Discord;
 using SpookVooper.Web.Entities;
 using SpookVooper.Web.DB;
 using SpookVooper.Web.News;
@@ -105,24 +102,6 @@ namespace SpookVooper.Web.Controllers
 
             await _context.NewsPosts.AddAsync(model);
             await _context.SaveChangesAsync();
-
-            SocketUser duser = user.GetDiscordSocket();
-            if (duser == null) duser = VoopAI.discordClient.CurrentUser;
-
-            EmbedBuilder embed = new EmbedBuilder()
-            {
-                Color = new Color(0, 100, 255),
-                Title = $"**{model.Title}** by *{user.UserName}*"
-            }
-            .WithAuthor(duser)
-            .WithCurrentTimestamp()
-            .WithUrl($"https://spookvooper.com/News/View?postid={model.PostID}");
-
-            embed.AddField("News Outlet", group.Name);
-            embed.AddField("Author", user.UserName);
-            embed.AddField("Content", $"{model.Content.Substring(0, Math.Min(model.Content.Length, 1000))}" + "...");
-
-            VoopAI.newsChannel.SendMessageAsync(embed: embed.Build());
 
             return RedirectToAction("View", new { postid = model.PostID });
         }

@@ -1,13 +1,12 @@
 ﻿using System.Collections.Generic;
-using Discord.WebSocket;
+using SpookVooper.Web.Entities;
 
 namespace SpookVooper.Web.Models.GovernmentViewModels
 {
     public class GovernmentIndexModel
     {
-        public SocketGuild server;
-        public SocketUser president;
-        public SocketUser vicePresident;
-        public IEnumerable<SocketUser> justices;
+        public User president;
+        public User vicePresident;
+        public IEnumerable<User> justices;
     }
 }

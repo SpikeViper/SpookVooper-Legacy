@@ -2,7 +2,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using SpookVooper.Data.Services;
-using SpookVooper.VoopAIService;
 using SpookVooper.Web.Models.GovernmentViewModels;
 using SpookVooper.Web.Services;
 using System;
@@ -11,7 +10,6 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using SpookVooper.Web.Helpers;
 using Microsoft.EntityFrameworkCore;
-using Discord;
 using SpookVooper.Web.Entities;
 using SpookVooper.Web.DB;
 using SpookVooper.Web.Government;
@@ -53,14 +51,13 @@ namespace SpookVooper.Web.Controllers
         {
             GovernmentIndexModel model = new GovernmentIndexModel();
 
-            await Task.Run(() =>
+            // TODO: Fix this shit
+            await Task.Run(async () =>
             {
-                model.president = VoopAI.server.Users.FirstOrDefault(u => u.Roles.Any(r => r.Id == 478312333723041792));
-                model.vicePresident = VoopAI.server.Users.FirstOrDefault(u => u.Roles.Any(r => r.Id == 607416531487424513));
-                model.justices = VoopAI.server.Users.Where(u => u.Roles.Any(r => r.Id == 695367302564151458));
+                model.president = await _context.Users.FirstOrDefaultAsync(x => x.UserName.ToLower() == "spikeviper");
+                model.vicePresident = await _context.Users.FirstOrDefaultAsync(x => x.UserName.ToLower() == "popefrancis");
+                model.justices = null;
             });
-
-            model.server = VoopAI.govServer;
 
             return View(model);
         }
@@ -246,21 +243,6 @@ namespace SpookVooper.Web.Controllers
 
             StatusMessage = "Successfully started election.";
 
-            EmbedBuilder embed = new EmbedBuilder()
-            {
-                Color = new Color(0, 100, 255),
-                Title = $"**{model.District}** Elections have begun!"
-            }
-            .WithCurrentTimestamp();
-
-            embed.AddField("News Outlet", "VoopAI Auto News");
-            embed.AddField("Author", "VoopAI The Bot");
-            embed.AddField("Content", $"Elections have begun in {model.District}! If you are a local, make sure to vote and represent " +
-                $"yourself in the district's political system. You can vote on the website under the 'Community->Elections' tab. Please check " +
-                $"other news sources for more info!");
-
-            VoopAI.newsChannel.SendMessageAsync(embed: embed.Build());
-
             return RedirectToAction("Elections");
         }
 
@@ -280,20 +262,6 @@ namespace SpookVooper.Web.Controllers
 
             _context.Elections.Update(election);
             await _context.SaveChangesAsync();
-
-            EmbedBuilder embed = new EmbedBuilder()
-            {
-                Color = new Color(0, 100, 255),
-                Title = $"**{election.District}** Elections called early!"
-            }
-            .WithCurrentTimestamp();
-
-            embed.AddField("News Outlet", "VoopAI Auto News");
-            embed.AddField("Author", "VoopAI The Bot");
-            embed.AddField("Content", $"Elections have been called early in {election.District}! Although I am unable to explain why, " +
-                $"this will likely be expanded upon in the other news stations. Stay tuned!");
-
-            VoopAI.newsChannel.SendMessageAsync(embed: embed.Build());
 
             StatusMessage = $"Successfully set election to end.";
             return RedirectToAction("ManageElections");
@@ -378,40 +346,10 @@ namespace SpookVooper.Web.Controllers
             if (!pass.Blacklist)
             {
                 StatusMessage = $"Successfully issued candidate pass.";
-
-                EmbedBuilder embed = new EmbedBuilder()
-                {
-                    Color = new Color(0, 100, 255),
-                    Title = $"**{user.Name}** Granted a candidacy pass!"
-                }
-                .WithCurrentTimestamp();
-
-                embed.AddField("News Outlet", "VoopAI Auto News");
-                embed.AddField("Author", "VoopAI The Bot");
-                embed.AddField("Content", $"The candidate {user.Name} appears to have been given special access to run in the " +
-                    $"{pass.District} {pass.Type} elections! We expect other stations to report on this development soon. This " +
-                    $"makes it very likely this candidate will be running in future races.");
-
-                VoopAI.newsChannel.SendMessageAsync(embed: embed.Build());
             }
             else
             {
                 StatusMessage = $"Successfully issued candidate blacklist.";
-
-                EmbedBuilder embed = new EmbedBuilder()
-                {
-                    Color = new Color(0, 100, 255),
-                    Title = $"**{user.Name}** Blocked from election!"
-                }
-                .WithCurrentTimestamp();
-
-                embed.AddField("News Outlet", "VoopAI Auto News");
-                embed.AddField("Author", "VoopAI The Bot");
-                embed.AddField("Content", $"The candidate {user.Name} appears to have been removed from the running in " +
-                    $"{pass.District} {pass.Type} elections! We expect other stations to report on this development soon. This " +
-                    $"effectively bars them from the Senate.");
-
-                VoopAI.newsChannel.SendMessageAsync(embed: embed.Build());
             }
 
             return RedirectToAction("ManageElections");

@@ -10,8 +10,6 @@ using SpookVooper.Web.Oauth2;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using SpookVooper.Web.Entities.Groups;
-using Discord.WebSocket;
-using SpookVooper.VoopAIService;
 using SpookVooper.Web.Government.Voting;
 using SpookVooper.Api.Entities;
 using AutoMapper;
@@ -193,45 +191,6 @@ namespace SpookVooper.Web.Entities
             }
         }
 
-        public SocketGuildUser GetDiscordSocket()
-        {
-            if (discord_id == null)
-            {
-                return null;
-            }
-            else
-            {
-                ulong id = (ulong)(discord_id);
-
-                SocketGuildUser socket = VoopAI.server.GetUser(id);
-
-                return socket;
-            }
-        }
-
-        public IReadOnlyCollection<SocketRole> GetDiscordRoles()
-        {
-            SocketGuildUser socket = GetDiscordSocket();
-
-            if (socket == null)
-            {
-                return null;
-            }
-            else
-            {
-                return socket.Roles;
-            }
-        }
-
-        public bool HasDiscordRole(string role)
-        {
-            var roles = GetDiscordRoles();
-
-            if (roles == null) { return false; }
-
-            return roles.Any(r => r.Name == role);
-        }
-
         public async Task<bool> IsSenator()
         {
             using (VooperContext context = new VooperContext(VooperContext.DBOptions))
@@ -247,60 +206,12 @@ namespace SpookVooper.Web.Entities
 
         public bool IsPrimeMinister()
         {
-            var roles = GetDiscordRoles();
-
-            if (roles == null) { return false; }
-
-            return roles.Any(r => r.Name.ToLower().Contains("prime minister"));
+            return (Id == "u-1419405d-9197-4383-a483-2eb93eab592e");
         }
 
         public bool IsJustice()
         {
-            var roles = GetDiscordRoles();
-
-            if (roles == null) { return false; }
-
-            return roles.Any(r => r.Name.ToLower().Contains("supreme court"));
-        }
-
-        public bool IsSupporter()
-        {
-            var roles = GetDiscordRoles();
-
-            return roles.Any(x => x.Name.ToLower().Contains("patreon")) ||
-                   roles.Any(x => x.Name.ToLower().Contains("youtube member"));
-        }
-
-        public SocketRole GetParty()
-        {
-            var roles = GetDiscordRoles();
-
-            if (roles == null) { return null; }
-
-            return roles.FirstOrDefault(r => r.Name.ToLower().Contains("party"));
-        }
-
-        public SocketRole GetXPRole()
-        {
-            var roles = GetDiscordRoles();
-
-            if (roles == null) { return null; }
-
-            return roles.FirstOrDefault(r => r.Name.ToLower().Contains("rank"));
-        }
-
-        public string GetDiscordAvatarUrl()
-        {
-            SocketGuildUser socket = GetDiscordSocket();
-
-            if (socket == null)
-            {
-                return null;
-            }
-            else
-            {
-                return socket.GetAvatarUrl();
-            }
+            return false;
         }
 
         public async Task<IEnumerable<Group>> GetJoinedGroupsAsync()
@@ -375,38 +286,6 @@ namespace SpookVooper.Web.Entities
                         return false;
                     }
 
-                    if (IsJustice())
-                    {
-                        return false;
-                    }
-
-                    if (discord_id == null)
-                    {
-                        return false;
-                    }
-
-                    SocketGuildUser duser = VoopAI.server.GetUser((ulong)discord_id);
-
-                    if (duser == null)
-                    {
-                        return false;
-                    }
-
-                    if (duser.JoinedAt == null)
-                    {
-                        return false;
-                    }
-
-                    if (Math.Abs(duser.JoinedAt.Value.UtcDateTime.Subtract(DateTime.UtcNow).TotalDays) < 90)
-                    {
-                        return false;
-                    }
-
-                    if (discord_message_count < 2500)
-                    {
-                        return false;
-                    }
-
                     return GetDaysSinceLastMove() > 30;
                 }
 
@@ -416,16 +295,7 @@ namespace SpookVooper.Web.Entities
 
         public string GetPfpUrl()
         {
-            string discord = GetDiscordAvatarUrl();
-
-            if (discord == null)
-            {
-                return "/media/unity-128.png";
-            }
-            else
-            {
-                return discord;
-            }
+            return "/media/unity-128.png";
         }
 
         public UserSnapshot MapToSnapshot(IMapper mapper)

@@ -2,11 +2,9 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using SpookVooper.Data.Services;
-using SpookVooper.VoopAIService;
 using SpookVooper.Web.Services;
 using System.Linq;
 using System.Threading.Tasks;
-using Discord.WebSocket;
 using SpookVooper.Web.Models.UserViewModels;
 using Microsoft.AspNetCore.Authorization;
 using SpookVooper.Web.Entities;
@@ -168,47 +166,6 @@ namespace SpookVooper.Web.Controllers
             if (user == null) return NotFound($"Could not find user with minecraft {minecraftid}");
 
             return Ok(user.Id);
-        }
-
-        public async Task<IActionResult> HasDiscordRole(string userid, string role)
-        {
-            User user = await _userManager.FindByIdAsync(userid);
-
-            if (user == null) return NotFound($"Could not find {userid}");
-            else
-            {
-                SocketGuildUser discordUser = VoopAI.server.Users.FirstOrDefault(u => u.Id == user.discord_id);
-
-                if (discordUser == null) return NotFound($"User has no linked discord account!");
-
-                else return Ok(discordUser.Roles.Any(r => r.Name.ToLower() == role.ToLower()));
-            }
-        }
-
-        public async Task<IActionResult> GetDiscordRoles(string userid)
-        {
-            User user = await _userManager.FindByIdAsync(userid);
-
-            if (user == null) return NotFound($"Could not find user {userid}.");
-
-            if (user.discord_id == null) return NotFound($"User does not have a linked discord.");
-
-            var roles = VoopAI.server.GetUser((ulong)user.discord_id).Roles;
-
-            string data = "";
-
-            if (roles.Count > 0)
-            {
-                foreach (var role in roles)
-                {
-                    data += role.Name + "|";
-                }
-
-                data = data.Substring(0, data.Length - 1);
-            }
-
-            return Ok(data);
-
         }
     }
 }

@@ -18,6 +18,7 @@ using SpookVooper.Web;
 using SpookVooper.Web.Forums;
 using SpookVooper.Web.Managers;
 using SpookVooper.Web.Controllers;
+using Microsoft.EntityFrameworkCore;
 
 namespace SpookVooper.Web.Api.Controllers
 {
@@ -268,22 +269,22 @@ namespace SpookVooper.Web.Api.Controllers
             // Ensure the user doesn't already own 3 groups
             int priorGroupCount = _context.Groups.AsQueryable().Where(g => g.Owner_Id == user.Id).Count();
 
-            if (!user.IsSupporter())
-            {
-                if (priorGroupCount > 2)
-                {
-                    StatusMessage = $"Error: You are at the 3 group limit! Consider becoming a patron!";
-                    return RedirectToAction("Index", controllerName: "Home");
-                }
-            }
-            else
-            {
+            //if (!user.IsSupporter())
+            //{
+            //    if (priorGroupCount > 2)
+            //    {
+            //        StatusMessage = $"Error: You are at the 3 group limit! Consider becoming a patron!";
+            //        return RedirectToAction("Index", controllerName: "Home");
+            //    }
+            //}
+            //else
+            //{
                 if (priorGroupCount > 9)
                 {
                     StatusMessage = $"Error: You are at the 10 group limit!";
                     return RedirectToAction("Index", controllerName: "Home");
                 }
-            }
+            //}
 
             Group group = new Group()
             {

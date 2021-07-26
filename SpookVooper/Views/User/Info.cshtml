@@ -72,16 +72,8 @@ else
                         <div class="col-sm-4 col-sm-offset-4">
                             <div>
                                 @{
-                                    var party = Model.GetParty();
-                                    var color = new Discord.Color(255, 255, 255);
-
-                                    if (party != null)
-                                    {
-                                        color = party.Color;
-                                    }
-
                                     <br />
-                                    <img class="govpfp" style="box-shadow: 0px 0px 0px 7px rgb(@color.R, @color.G, @color.B);" src="@Model.GetPfpUrl()" />
+                                    <img class="govpfp" style="box-shadow: 0px 0px 0px 7px #1bd9f2;" src="@Model.GetPfpUrl()" />
                                 }
                             </div>
                         </div>

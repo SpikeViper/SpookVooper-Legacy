@@ -8,7 +8,6 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
 using SpookVooper.Web.Services;
-using SpookVooper.VoopAIService;
 using SpookVooper.Data.Services;
 using Microsoft.AspNetCore.HttpOverrides;
 using Westwind.AspNetCore.Markdown;
@@ -191,7 +190,6 @@ namespace SpookVooper
                 Console.WriteLine("Application is in DEVELOPMENT mode.");
                 Console.WriteLine("///////////////////////////////////");
                 app.UseDeveloperExceptionPage();
-                VoopAI.isDev = true;
             }
             else
             {

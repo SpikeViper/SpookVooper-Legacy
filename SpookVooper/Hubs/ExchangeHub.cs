@@ -1,6 +1,5 @@
 ﻿using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
-using SpookVooper.VoopAIService;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -30,7 +29,7 @@ namespace SpookVooper.Web.Hubs
 
         public async Task SendMessage(string svid, string auth, string message, string ticker, string mode)
         {
-            using (VooperContext context = new VooperContext(VoopAI.DBOptions))
+            using (VooperContext context = new VooperContext(VooperContext.DBOptions))
             {
                 Entity entity = await Entity.FindAsync(svid);
 
@@ -51,7 +50,7 @@ namespace SpookVooper.Web.Hubs
                         return;
                     }
 
-                    if (authUser.HasDiscordRole("Moderators"))
+                    if (await authUser.IsSenator())
                     {
                         if (message.StartsWith('/'))
                         {

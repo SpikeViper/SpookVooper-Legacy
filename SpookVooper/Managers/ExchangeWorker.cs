@@ -5,7 +5,6 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.AspNetCore.Identity;
-using SpookVooper.VoopAIService;
 using SpookVooper.Web.Entities;
 using SpookVooper.Web.DB;
 using SpookVooper.Web.Managers;

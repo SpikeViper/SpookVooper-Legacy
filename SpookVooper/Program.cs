@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using SpookVooper.VoopAIService;
 using SpookVooper.Web.Workers;
 
 namespace SpookVooper.Web
@@ -30,7 +29,6 @@ namespace SpookVooper.Web
                     webBuilder.UseUrls("http://localhost:5000", "https://localhost:5001");
                 }).ConfigureServices(services =>
                 {
-                    services.AddHostedService<VoopAIWorker>();
                     services.AddHostedService<EconomyWorker>();
                     services.AddHostedService<ExchangeWorker>();
                     services.AddHostedService<RecordWorker>();

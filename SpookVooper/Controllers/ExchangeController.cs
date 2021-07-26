@@ -1,6 +1,5 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using SpookVooper.VoopAIService;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
@@ -221,7 +220,7 @@ namespace SpookVooper.Web.Controllers
             await _context.SaveChangesAsync();
 
             StatusMessage = $"Successfully issued {model.Amount} ${model.Ticker}";
-            await VoopAI.ecoChannel.SendMessageAsync($":new: Welcome {model.Amount} {model.Ticker}, from {group.Name} to the market at ¢{model.Initial_Value}, with an initial {sellOffer.Amount} on the market!");
+            // await VoopAI.ecoChannel.SendMessageAsync($":new: Welcome {model.Amount} {model.Ticker}, from {group.Name} to the market at ¢{model.Initial_Value}, with an initial {sellOffer.Amount} on the market!");
             return RedirectToAction("Index");
         }
 

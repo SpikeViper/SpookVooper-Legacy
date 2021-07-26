@@ -5,7 +5,6 @@ using System.Linq;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.SignalR;
 using Newtonsoft.Json;
-using SpookVooper.VoopAIService;
 using SpookVooper.Web.DB;
 using SpookVooper.Web.Economy.Stocks;
 using SpookVooper.Web.Government;
@@ -163,11 +162,11 @@ namespace SpookVooper.Web.Managers
 
                         if (trueValue < beforePrice)
                         {
-                            VoopAI.ecoChannel.SendMessageAsync($":chart_with_downwards_trend: ({def.Ticker}) Trade: {tradeAmount}@{buy.Target}, price drop to ¢{trueValue.Round()}");
+                            //VoopAI.ecoChannel.SendMessageAsync($":chart_with_downwards_trend: ({def.Ticker}) Trade: {tradeAmount}@{buy.Target}, price drop to ¢{trueValue.Round()}");
                         }
                         else if (trueValue > beforePrice)
                         {
-                            VoopAI.ecoChannel.SendMessageAsync($":chart_with_upwards_trend: ({def.Ticker}) Trade: {tradeAmount}@{buy.Target}, price increase to ¢{trueValue.Round()}");
+                            //VoopAI.ecoChannel.SendMessageAsync($":chart_with_upwards_trend: ({def.Ticker}) Trade: {tradeAmount}@{buy.Target}, price increase to ¢{trueValue.Round()}");
                         }
                     }
 

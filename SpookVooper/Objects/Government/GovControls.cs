@@ -5,6 +5,7 @@ using System.Text;
 using System.Linq;
 using System.Threading.Tasks;
 using SpookVooper.Web.DB;
+using Microsoft.EntityFrameworkCore;
 
 namespace SpookVooper.Web.Government
 {

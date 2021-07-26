@@ -3,14 +3,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using AutoMapper;
-using Discord.WebSocket;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using SpookVooper.Web.Entities;
 using SpookVooper.Web.Government;
-using SpookVooper.VoopAIService;
 using SpookVooper.Web.DB;
 using Newtonsoft.Json;
+using Microsoft.EntityFrameworkCore;
 
 namespace SpookVooper.Web.Api.Controllers
 {
@@ -117,41 +116,6 @@ namespace SpookVooper.Web.Api.Controllers
             if (user == null) return NotFound($"Could not find user with minecraft {minecraftid}");
 
             return Ok(user.Id);
-        }
-
-        [HttpGet]
-        public async Task<ActionResult<bool>> HasDiscordRole(string userid, string role)
-        {
-            User user = await _userManager.FindByIdAsync(userid);
-
-            if (user == null) return NotFound($"Could not find {userid}");
-            else
-            {
-                SocketGuildUser discordUser = VoopAI.server.Users.FirstOrDefault(u => u.Id == user.discord_id);
-
-                if (discordUser == null) return NotFound($"User has no linked discord account!");
-
-                else return discordUser.Roles.Any(r => r.Name.ToLower() == role.ToLower());
-            }
-        }
-
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<SpookVooper.Api.Entities.DiscordRoleData>>> GetDiscordRoles(string svid)
-        {
-            User user = await _userManager.FindByIdAsync(svid);
-
-            if (user == null) return NotFound($"Could not find user {svid}.");
-
-            if (user.discord_id == null) return NotFound($"User does not have a linked discord.");
-
-            List<SpookVooper.Api.Entities.DiscordRoleData> data = new List<SpookVooper.Api.Entities.DiscordRoleData>();
-
-            foreach (var result in VoopAI.server.GetUser((ulong)user.discord_id).Roles.Select(r => (r.Name, r.Id)))
-            {
-                data.Add(new SpookVooper.Api.Entities.DiscordRoleData(result.Name, result.Id));
-            }
-
-            return data;
         }
 
         [HttpGet]

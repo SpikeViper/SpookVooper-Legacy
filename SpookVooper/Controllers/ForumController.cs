@@ -2,7 +2,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using SpookVooper.Data.Services;
-using SpookVooper.VoopAIService;
 using SpookVooper.Web.Services;
 using System;
 using System.Collections.Generic;
@@ -265,10 +264,10 @@ namespace SpookVooper.Web.Controllers
 
                 if (model.Picture)
                 {
-                    await VoopAI.forumChannel.SendMessageAsync($"New Picture Post! \n https://SpookVooper.com/Forum/ViewPost/{model.PostID}");
+                    // await VoopAI.forumChannel.SendMessageAsync($"New Picture Post! \n https://SpookVooper.com/Forum/ViewPost/{model.PostID}");
                 }
                 else { 
-                    await VoopAI.forumChannel.SendMessageAsync($"New Post! \n https://SpookVooper.com/Forum/ViewPost/{model.PostID}");
+                    // await VoopAI.forumChannel.SendMessageAsync($"New Post! \n https://SpookVooper.com/Forum/ViewPost/{model.PostID}");
                 }
 
                 StatusMessage = $"Post created successfully!";

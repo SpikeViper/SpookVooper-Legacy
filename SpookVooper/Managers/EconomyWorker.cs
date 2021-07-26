@@ -8,7 +8,6 @@ using Microsoft.AspNetCore.Identity;
 using SpookVooper.Web.Entities;
 using SpookVooper.Web.DB;
 using SpookVooper.Web.Managers;
-using SpookVooper.VoopAIService;
 
 namespace SpookVooper.Web.Workers
 {

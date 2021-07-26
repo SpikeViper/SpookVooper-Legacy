@@ -3,11 +3,11 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using SpookVooper.Web.Entities;
 using SpookVooper.Data.Services;
-using SpookVooper.VoopAIService;
 using SpookVooper.Web.DB;
 using SpookVooper.Web.Models.LeaderboardViewModels;
 using SpookVooper.Web.Services;
 using System.Threading.Tasks;
+using System.Linq;
 
 namespace SpookVooper.Web.Controllers
 {
@@ -42,12 +42,15 @@ namespace SpookVooper.Web.Controllers
 
             await Task.Run(() =>
             {
-                model = new LeaderboardIndexModel()
-                {
-                    users = VoopAI.leaderboard,
-                    page = id,
-                    amount = 25
-                };
+                using (VooperContext c = new VooperContext(VooperContext.DBOptions)) {
+                    model = new LeaderboardIndexModel()
+                    {
+                        // TODO: Fix this.
+                        users = c.Users.OrderByDescending(x => x.discord_message_xp).ToList(),
+                        page = id,
+                        amount = 25
+                    };
+                }
             });
 
              return View(model);

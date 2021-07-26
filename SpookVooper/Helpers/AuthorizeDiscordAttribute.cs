@@ -3,8 +3,6 @@ using Microsoft.AspNetCore.Mvc.Filters;
 using System;
 using System.Security.Claims;
 using System.Linq;
-using SpookVooper.VoopAIService;
-using Discord.WebSocket;
 using SpookVooper.Web.Controllers;
 using SpookVooper.Web.DB;
 using SpookVooper.Web.Entities;
@@ -46,7 +44,7 @@ namespace SpookVooper.Web.Helpers
 
             string userId = cl.Value;
 
-            using (VooperContext c = new VooperContext(VoopAI.DBOptions)) 
+            using (VooperContext c = new VooperContext(VooperContext.DBOptions)) 
             {
                 Console.WriteLine("Test");
 
@@ -54,23 +52,7 @@ namespace SpookVooper.Web.Helpers
 
                 if (user == null) Fail(context);
 
-                SocketGuildUser discordUser = null;
-
-                discordUser = VoopAI.server.Users.FirstOrDefault(u => u.Id == user.discord_id);
-
-                if (discordUser == null) Fail(context);
-
-                string[] claims = _claim.Value.Split(',');
-
                 bool allowed = false;
-
-                foreach (string claim in claims)
-                {
-                    if (discordUser.Roles.Any(r => r.Name.ToLower() == claim.ToLower()))
-                    {
-                        allowed = true;
-                    }
-                }
 
                 if (!allowed)
                 {
@@ -81,7 +63,7 @@ namespace SpookVooper.Web.Helpers
 
         public void Fail(AuthorizationFilterContext context)
         {
-            AccountController.forbidden = $"This page is restricted to the role {_claim.Value}";
+            AccountController.forbidden = $"This function is not yet working for SV standalone. Sorry!";
             context.Result = new ForbidResult();
         }
     }

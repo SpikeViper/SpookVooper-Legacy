@@ -4,20 +4,7 @@
 
 @if (Model.Group_Category == "Parties")
 {
-
-    var color = new Discord.Color(255, 255, 255);
-
-    if (owner != null)
-    {
-        var party = owner.GetParty();
-
-        if (party != null)
-        {
-            color = party.Color;
-        }
-    }
-
-    <img class="govpfp m-2" style="max-width:90%; max-height:90%; box-shadow: 0px 0px 0px 7px rgb(@color.R, @color.G, @color.B);" src="@Model.Image_Url" />
+    <img class="govpfp m-2" style="max-width:90%; max-height:90%; box-shadow: 0px 0px 0px 7px #1bd9f2;" src="@Model.Image_Url" />
 }
 else
 {
