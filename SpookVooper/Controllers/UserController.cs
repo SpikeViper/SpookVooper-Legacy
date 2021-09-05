@@ -9,6 +9,8 @@ using SpookVooper.Web.Models.UserViewModels;
 using Microsoft.AspNetCore.Authorization;
 using SpookVooper.Web.Entities;
 using SpookVooper.Web.DB;
+using SpookVooper.Web.Managers;
+using Microsoft.EntityFrameworkCore;
 
 namespace SpookVooper.Web.Controllers
 {
@@ -20,6 +22,9 @@ namespace SpookVooper.Web.Controllers
         private readonly IEmailSender _emailSender;
         private readonly ILogger _logger;
         private readonly IConnectionHandler _connectionHandler;
+
+        [TempData]
+        public string StatusMessage { get; set; }
 
         public UserController(
             VooperContext context,
@@ -166,6 +171,39 @@ namespace SpookVooper.Web.Controllers
             if (user == null) return NotFound($"Could not find user with minecraft {minecraftid}");
 
             return Ok(user.Id);
+        }
+
+        [HttpPost]
+        [Authorize]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Pay(UserPayModel model)
+        {
+            User user = await _userManager.GetUserAsync(User);
+
+            Entity target = await _context.Users.FirstOrDefaultAsync(x => x.UserName.ToLower() == model.Target.ToLower());
+            if (target == null) await _context.Groups.FirstOrDefaultAsync(x => x.Name.ToLower() == model.Target.ToLower());
+
+            if (target == null)
+            {
+                return await RedirectBack($"Error: Could not find {model.Target}");
+            }
+
+            TaskResult result = await new TransactionRequest(user.Id, target.Id, model.Amount, "Group Direct Payment", ApplicableTax.None, false).Execute();
+
+            if (!result.Succeeded)
+            {
+                return await RedirectBack(result.Info);
+            }
+
+            StatusMessage = "Successfully sent direct payment.";
+
+            return RedirectToAction("Info", new { svid = user.Id });
+        }
+
+        public async Task<IActionResult> RedirectBack(string reason)
+        {
+            StatusMessage = reason;
+            return Redirect(Request.Headers["Referer"].ToString());
         }
     }
 }
