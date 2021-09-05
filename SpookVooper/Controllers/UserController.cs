@@ -173,6 +173,18 @@ namespace SpookVooper.Web.Controllers
             return Ok(user.Id);
         }
 
+        [HttpGet]
+        [Authorize]
+        public async Task<IActionResult> Pay()
+        {
+            User user = await _userManager.GetUserAsync(User);
+
+            UserPayModel model = new UserPayModel();
+            model.User = user;
+
+            return View(model);
+        }
+
         [HttpPost]
         [Authorize]
         [ValidateAntiForgeryToken]
