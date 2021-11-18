@@ -19,6 +19,8 @@ using SpookVooper.Web.Forums;
 using SpookVooper.Web.Managers;
 using SpookVooper.Web.Controllers;
 using Microsoft.EntityFrameworkCore;
+using SpookVooper.Web.Hubs;
+using Microsoft.AspNetCore.SignalR;
 
 namespace SpookVooper.Web.Api.Controllers
 {
@@ -333,6 +335,8 @@ namespace SpookVooper.Web.Api.Controllers
 
             await _context.SaveChangesAsync();
 
+            NameHub.Current.Clients.All.SendAsync("NameChange", $"{model.Name};{model.Id}");
+
             return RedirectToAction(nameof(View), new { groupid = model.Id });
         }
 
@@ -530,6 +534,8 @@ namespace SpookVooper.Web.Api.Controllers
             _context.Update(lastmodel);
 
             await _context.SaveChangesAsync();
+
+            NameHub.Current.Clients.All.SendAsync("NameChange", $"{lastmodel.Name};{model.Id}");
 
             StatusMessage = $"Successfully edited {model.Name}!";
 

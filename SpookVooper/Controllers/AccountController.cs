@@ -19,6 +19,8 @@ using System.Net.Http;
 using System.Net.Http.Json;
 using System.Text;
 using Newtonsoft.Json;
+using SpookVooper.Web.Hubs;
+using Microsoft.AspNetCore.SignalR;
 
 namespace SpookVooper.Web.Controllers
 {
@@ -446,6 +448,7 @@ namespace SpookVooper.Web.Controllers
                     await _signInManager.SignInAsync(user, isPersistent: false);
                     _logger.LogInformation("User created a new account with password.");
 
+                    await NameHub.Current.Clients.All.SendAsync("NameChange", $"{user.UserName};{user.Id}");
                     Console.WriteLine(user.Id);
 
                     return RedirectToLocal(returnUrl);

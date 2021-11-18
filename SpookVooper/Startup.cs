@@ -218,10 +218,12 @@ namespace SpookVooper
 
                 endpoints.MapHub<TransactionHub>("/transactionHub");
                 endpoints.MapHub<ExchangeHub>("/ExchangeHub");
+                endpoints.MapHub<NameHub>("/nameHub");
             });
 
             TransactionHub.Current = app.ApplicationServices.GetService<IHubContext<TransactionHub>>();
             ExchangeHub.Current = app.ApplicationServices.GetService<IHubContext<ExchangeHub>>();
+            NameHub.Current = app.ApplicationServices.GetService<IHubContext<NameHub>>();
         }
     }
 }

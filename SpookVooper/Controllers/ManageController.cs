@@ -12,6 +12,8 @@ using SpookVooper.Web.Entities;
 using SpookVooper.Web.Models;
 using SpookVooper.Web.Models.ManageViewModels;
 using SpookVooper.Web.Services;
+using SpookVooper.Web.Hubs;
+using Microsoft.AspNetCore.SignalR;
 
 namespace SpookVooper.Web.Controllers
 {
@@ -94,6 +96,7 @@ namespace SpookVooper.Web.Controllers
                     StatusMessage = "Failed to set Username. Please use alphanumeric values: No spaces, special characters, or symbols.";
                     return RedirectToAction(nameof(Index));
                 }
+                await NameHub.Current.Clients.All.SendAsync("NameChange", $"{model.Username};{model.Id}");
             }
 
             var email = user.Email;
